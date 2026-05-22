@@ -405,5 +405,7 @@ FodyWeavers.xsd
 .serena
 CLAUDE.local.md
 .superpowers
+superpowers
+docs
 /.idea/.idea.Chaos.Client/.idea/workspace.xml
 *.stackdump

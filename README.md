@@ -538,6 +538,10 @@ Requires the **.NET 10 SDK**. Builds and runs on Windows, macOS, and Linux.
 Then:
 
 ```bash
+# Fetch the Chaos-Server submodule (shared protocol projects) — needs access to the private fork.
+# Cloning the client with --recursive does this automatically.
+git submodule update --init --recursive
+
 dotnet build Chaos.Client.slnx
 dotnet run --project Chaos.Client/Chaos.Client.csproj
 ```
@@ -612,14 +616,15 @@ Outbound packets are symmetric — add a method on `ConnectionManager` that call
 
 **Adding a brand-new packet the library has never seen.** A new packet means a new `ServerOpCode` (or `ClientOpCode`)
 enum value, a new args type, and a new `IPacketConverter` to serialize/deserialize it. All of that lives in
-`Chaos.Networking` and its dependencies, which this project consumes as a NuGet package — you can't add new types to a
-compiled dependency.
+`Chaos.Networking` and its dependencies, which this client references directly from the `Chaos-Server` git submodule (see [Build & Run](#build--run)), so
+new types are added right there in source.
 
-The most obvious path is to **fork [Chaos-Server](https://github.com/Sichii/Chaos-Server), drop the `Chaos.Networking`
-NuGet reference from this project, and add `ProjectReference`s to the networking source projects from your server fork
-**. The server repo ships the full source for `Chaos.Networking` and its dependencies; you can pull those into the
-client solution and leave the server-only `Chaos` project out if you don't want it here. New opcodes / args / converters
-then live in a single source tree that both client and server compile against, which keeps them in sync by construction.
+This is already wired up: the client references the `Chaos.Networking` source projects (and their dependencies)
+directly from the [`Chaos-Server`](https://github.com/Jinori/Chaos-Server) git submodule rather than a NuGet package
+(see [Build & Run](#build--run)). Add the new opcode / args / converter to the source under `Chaos-Server/`, rebuild,
+and the reflection-based converter discovery in `GameClient` picks it up automatically. The types live in a single
+source tree that both client and server compile against, which keeps them in sync by construction — then commit and
+push those changes from inside the submodule to the `Chaos-Server` repo when ready.
 
 Other routes exist — republishing your own preview NuGets, or shimming new converters on the client side alongside the
 library's — but referencing the source projects directly is the path with the fewest moving parts, and if you're adding

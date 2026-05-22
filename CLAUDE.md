@@ -9,6 +9,10 @@ Chaos.Client is a Dark Ages MMORPG client built in C# (.NET 10.0) using MonoGame
 ## Build & Run
 
 ```bash
+# First time: fetch the Chaos-Server submodule (the shared protocol projects).
+# Cloning the client with --recursive does this automatically.
+git submodule update --init --recursive
+
 dotnet build Chaos.Client.slnx
 dotnet run --project Chaos.Client/Chaos.Client.csproj
 ```
@@ -36,17 +40,17 @@ Chaos.Client.slnx (.NET 10.0, C# 14)
 |--------------------------------------------|---------------------------------------------------------------------------|
 | DALib                                      | Dark Ages file format support, SkiaSharp rendering                        |
 | MonoGame.Framework.DesktopGL 3.8.4.1       | Cross-platform graphics/windowing                                         |
-| Chaos.Networking 1.11.0-preview            | Complete protocol library: packet converters, crypto, opcodes, args types |
-| Chaos.Common 1.11.0-preview                | Shared extension methods (NuGet)                                          |
-| Chaos.DarkAges 1.11.0-preview              | Dark Ages protocol types (NuGet)                                          |
-| Chaos.Geometry 1.11.0-preview              | Geometry types -- rectangles, points (NuGet)                              |
-| Chaos.Pathfinding 1.11.0-preview           | A* pathfinding (NuGet)                                                    |
+| Chaos.Networking (Chaos-Server submodule)            | Complete protocol library: packet converters, crypto, opcodes, args types |
+| Chaos.Common (Chaos-Server submodule)                | Shared extension methods                                          |
+| Chaos.DarkAges (Chaos-Server submodule)              | Dark Ages protocol types                                          |
+| Chaos.Geometry (Chaos-Server submodule)              | Geometry types -- rectangles, points                              |
+| Chaos.Pathfinding (Chaos-Server submodule)           | A* pathfinding                                                    |
 | Microsoft.Extensions.Caching.Memory 10.0.5 | MemoryCache infrastructure                                                |
 | TextCopy 6.2.1                             | Cross-platform clipboard access (used by `Utilities/Clipboard`)           |
 
 ## Build Configuration
 
-Centralized in `Directory.Build.props`: C# 14, net10.0, nullable enabled, implicit usings, TieredPGO + TieredCompilation (+ QuickJit) enabled, WarningLevel 4, EnforceCodeStyleInBuild. Package versions managed centrally in `Directory.Packages.props`. Versioning via Nerdbank.GitVersioning.
+Centralized in `Directory.Build.props`: C# 14, net10.0, nullable enabled, implicit usings, TieredPGO + TieredCompilation (+ QuickJit) enabled, WarningLevel 4, EnforceCodeStyleInBuild. Package versions managed centrally in `Directory.Packages.props`. Versioning via Nerdbank.GitVersioning. The `Chaos.*` shared libraries are referenced as projects from the `Chaos-Server` git submodule (path set by the `UnoraServerPath` MSBuild property, default `./Chaos-Server`); a build-time check errors if the submodule has not been initialized.
 
 ## Architecture
 
@@ -86,7 +90,7 @@ Centralized in `Directory.Build.props`: C# 14, net10.0, nullable enabled, implic
 - **`GameClient`** -- Low-level TCP: crypto, packet framing (0xAA + 2-byte BE length), sequence tracking, `InboundQueue` via `DrainPackets()`. Auto-responds to HeartBeat/SynchronizeTicks.
 - **`ConnectionManager`** -- State machine (Disconnected->Connecting->Lobby->Login->World), array-indexed handler dispatch (60+ handlers), 48+ events. Full lobby/login/world-entry flows. Player action methods, communication, NPC/dialog, requests.
 - **`ServerTableData`** -- Zlib-compressed server list parser.
-- Protocol types come from the `Chaos.Networking` / `Chaos.DarkAges` NuGet packages (preview 1.11.0) — serialization, opcodes, and args types are all defined there rather than in this project.
+- Protocol types come from the `Chaos.Networking` / `Chaos.DarkAges` projects in the `Chaos-Server` git submodule (referenced directly, not via NuGet) — serialization, opcodes, and args types are all defined there rather than in this project.
 
 ### Client Project (`Chaos.Client`) Internal Organization
 

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-        <PackageReference Include="Chaos.Networking"/>
+        <ProjectReference Include="$(UnoraServerPath)\Chaos.Networking\Chaos.Networking.csproj"/>
     </ItemGroup>
 </Project>

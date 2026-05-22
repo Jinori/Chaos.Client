@@ -967,9 +967,6 @@ public sealed partial class WorldScreen
                 }
             }
         }
-
-        if (args.Sound.HasValue)
-            Game.SoundSystem.PlaySound(args.Sound.Value);
     }
 
     //TargetAnimation values in [PROJECTILE_ANIMATION_BASE, PROJECTILE_ANIMATION_MAX_EXCLUSIVE) are MEFC projectiles;

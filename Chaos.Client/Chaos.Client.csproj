@@ -24,10 +24,10 @@
         <ProjectReference Include="..\Chaos.Client.Data\Chaos.Client.Data.csproj"/>
         <ProjectReference Include="..\Chaos.Client.Rendering\Chaos.Client.Rendering.csproj"/>
         <ProjectReference Include="..\Chaos.Client.Networking\Chaos.Client.Networking.csproj"/>
+        <ProjectReference Include="$(UnoraServerPath)\Chaos.Pathfinding\Chaos.Pathfinding.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Chaos.Pathfinding"/>
         <PackageReference Include="TextCopy"/>
     </ItemGroup>
 </Project>

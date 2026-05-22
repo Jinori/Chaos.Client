@@ -6,6 +6,43 @@
         <File Path="Directory.Packages.props" />
         <File Path="README.md" />
     </Folder>
+    <Folder Name="/Chaos-Server/">
+        <Project Path="Chaos-Server/Chaos.Collections/Chaos.Collections.csproj" />
+        <Project Path="Chaos-Server/Chaos.Common/Chaos.Common.csproj" />
+        <Project Path="Chaos-Server/Chaos.Cryptography/Chaos.Cryptography.csproj" />
+        <Project Path="Chaos-Server/Chaos.DarkAges/Chaos.DarkAges.csproj" />
+        <Project Path="Chaos-Server/Chaos.Geometry/Chaos.Geometry.csproj" />
+        <Project Path="Chaos-Server/Chaos.IO/Chaos.IO.csproj" />
+        <Project Path="Chaos-Server/Chaos.Messaging/Chaos.Messaging.csproj" />
+        <Project Path="Chaos-Server/Chaos.MetaData/Chaos.MetaData.csproj" />
+        <Project Path="Chaos-Server/Chaos.Networking/Chaos.Networking.csproj" />
+        <Project Path="Chaos-Server/Chaos.NLog.Logging/Chaos.NLog.Logging.csproj" />
+        <Project Path="Chaos-Server/Chaos.Packets/Chaos.Packets.csproj" />
+        <Project Path="Chaos-Server/Chaos.Pathfinding/Chaos.Pathfinding.csproj" />
+        <Project Path="Chaos-Server/Chaos.Schemas/Chaos.Schemas.csproj" />
+        <Project Path="Chaos-Server/Chaos.Scripting/Chaos.Scripting.csproj" />
+        <Project Path="Chaos-Server/Chaos.Security/Chaos.Security.csproj" />
+        <Project Path="Chaos-Server/Chaos.Storage/Chaos.Storage.csproj" />
+        <Project Path="Chaos-Server/Chaos.Time/Chaos.Time.csproj" />
+        <Project Path="Chaos-Server/Chaos.TypeMapper/Chaos.TypeMapper.csproj" />
+    </Folder>
+    <Folder Name="/Chaos-Server/Abstractions/">
+        <Project Path="Chaos-Server/Chaos.Common.Abstractions/Chaos.Common.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Cryptography.Abstractions/Chaos.Cryptography.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Geometry.Abstractions/Chaos.Geometry.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Messaging.Abstractions/Chaos.Messaging.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Networking.Abstractions/Chaos.Networking.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Packets.Abstractions/Chaos.Packets.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Pathfinding.Abstractions/Chaos.Pathfinding.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Scripting.Abstractions/Chaos.Scripting.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Security.Abstractions/Chaos.Security.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Storage.Abstractions/Chaos.Storage.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.Time.Abstractions/Chaos.Time.Abstractions.csproj" />
+        <Project Path="Chaos-Server/Chaos.TypeMapper.Abstractions/Chaos.TypeMapper.Abstractions.csproj" />
+    </Folder>
+    <Folder Name="/Chaos-Server/Extensions/">
+        <Project Path="Chaos-Server/Chaos.Extensions.Geometry/Chaos.Extensions.Geometry.csproj" />
+    </Folder>
     <Project Path="Chaos.Client.Data/Chaos.Client.Data.csproj" />
     <Project Path="Chaos.Client.Networking/Chaos.Client.Networking.csproj" />
     <Project Path="Chaos.Client.Rendering/Chaos.Client.Rendering.csproj" />

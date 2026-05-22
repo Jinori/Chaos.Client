@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-        <PackageReference Include="Chaos.Common"/>
-        <PackageReference Include="Chaos.DarkAges"/>
-        <PackageReference Include="Chaos.Geometry"/>
+        <ProjectReference Include="$(UnoraServerPath)\Chaos.Common\Chaos.Common.csproj"/>
+        <ProjectReference Include="$(UnoraServerPath)\Chaos.DarkAges\Chaos.DarkAges.csproj"/>
+        <ProjectReference Include="$(UnoraServerPath)\Chaos.Geometry\Chaos.Geometry.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="DALib" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory"/>
     </ItemGroup>

@@ -1,4 +1,18 @@
 <Project>
+    <!-- Path to the Chaos-Server git submodule (Jinori/Chaos-Server) whose shared projects
+         (Chaos.Networking, Chaos.DarkAges, Chaos.Common, Chaos.Geometry, Chaos.Pathfinding) the
+         client references directly instead of via NuGet. Defaults to the in-repo submodule at
+         ./Chaos-Server (run a recursive submodule update after cloning the client). Override with
+         the UnoraServerPath env var or MSBuild property to point at a different server checkout. -->
+    <PropertyGroup>
+        <UnoraServerPath Condition="'$(UnoraServerPath)' == ''">$(MSBuildThisFileDirectory)Chaos-Server</UnoraServerPath>
+    </PropertyGroup>
+
+    <!-- Fail early with a clear message if the Chaos-Server submodule hasn't been initialized. -->
+    <Target Name="EnsureServerSubmodule" BeforeTargets="CollectPackageReferences;PrepareForBuild">
+        <Error Condition="!Exists('$(UnoraServerPath)\Chaos.Networking\Chaos.Networking.csproj')"
+               Text="Chaos-Server submodule not found at '$(UnoraServerPath)'. Run: git submodule update --init --recursive" />
+    </Target>
     <PropertyGroup>
         <LangVersion>14</LangVersion>
         <TargetFramework>net10.0</TargetFramework>
