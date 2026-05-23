@@ -140,6 +140,21 @@ public static class ImageUtil
     }
 
     /// <summary>
+    ///     Returns a new texture that is a 50/50 blend of <paramref name="source" /> toward <paramref name="tint" />.
+    ///     Used for server-driven status tints.
+    /// </summary>
+    public static Texture2D BuildColorTinted(GraphicsDevice device, Texture2D source, Color tint)
+    {
+        using var scope = new PixelBufferScope(source);
+        Blend50(scope.Pixels, scope.Count, tint);
+
+        var result = new Texture2D(device, scope.Width, scope.Height);
+        scope.CommitTo(result);
+
+        return result;
+    }
+
+    /// <summary>
     ///     Returns a new texture that is a blue-shift tinted copy of <paramref name="source" /> for hover highlights.
     /// </summary>
     public static Texture2D BuildHoverTinted(GraphicsDevice device, Texture2D source)

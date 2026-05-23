@@ -191,6 +191,11 @@ public delegate void DisplayUnequipHandler(DisplayUnequipArgs args);
 public delegate void DisplayVisibleEntitiesHandler(DisplayVisibleEntitiesArgs args);
 
 /// <summary>
+///     Fired when an entity's tint color is set.
+/// </summary>
+public delegate void SetEntityTintHandler(SetEntityTintArgs args);
+
+/// <summary>
 ///     Fired when door states are updated.
 /// </summary>
 public delegate void DoorHandler(DoorArgs args);

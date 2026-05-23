@@ -61,6 +61,7 @@ public readonly record struct AislingDrawParams(
     float TileCenterY,
     Vector2 VisualOffset,
     EntityTintType Tint,
+    Color StatusTint,
     bool IsDead,
     float Alpha = 1f);
 
@@ -178,6 +179,7 @@ public sealed class AislingRenderer : IDisposable
 
     private readonly Dictionary<int, Texture2D> SwimMaleFrameCache = [];
     private readonly Dictionary<Texture2D, Texture2D> TintedTextureCache = [];
+    private readonly Dictionary<(Texture2D Source, uint PackedColor), Texture2D> StatusTintCache = [];
 
     private static readonly TimeSpan LAYER_IMAGE_CACHE_SLIDING = TimeSpan.FromSeconds(30);
     private MemoryCache LayerImageCache = new(new MemoryCacheOptions());
@@ -190,6 +192,7 @@ public sealed class AislingRenderer : IDisposable
         ClearSwimCache();
         ClearCompositeCache();
         ClearTintedCache();
+        ClearStatusTintCache();
         ClearLayerImageCache();
         ClearGroupTintCache();
         ClearHitTintCache();
@@ -209,6 +212,11 @@ public sealed class AislingRenderer : IDisposable
             entry.Texture?.Dispose();
 
         CompositeCache.Clear();
+
+        //status-tint textures are keyed on the composite source textures disposed above; the bulk
+        //clear bypasses DisposeCompositeTexture, so free the derived textures here to avoid leaking
+        //them each map change. They are independent Texture2D objects, so this won't double-dispose.
+        StatusTintCache.DisposeAndClear();
     }
 
     private void DisposeCompositeTexture(Texture2D texture)
@@ -221,6 +229,19 @@ public sealed class AislingRenderer : IDisposable
 
         if (HitTintCache.Remove(texture, out var hitTinted))
             hitTinted.Dispose();
+
+        //remove all status-tint variants keyed on this source texture
+        var keysToRemove = new List<(Texture2D Source, uint PackedColor)>();
+
+        foreach (var key in StatusTintCache.Keys)
+            if (key.Source == texture)
+                keysToRemove.Add(key);
+
+        foreach (var key in keysToRemove)
+        {
+            if (StatusTintCache.Remove(key, out var statusTinted))
+                statusTinted.Dispose();
+        }
 
         texture.Dispose();
     }
@@ -239,6 +260,11 @@ public sealed class AislingRenderer : IDisposable
     ///     Disposes all cached hover-highlight tinted textures. Call when the highlighted entity changes.
     /// </summary>
     public void ClearTintedCache() => TintedTextureCache.DisposeAndClear();
+
+    /// <summary>
+    ///     Disposes all cached status-tinted composite textures. Call when entity tint state changes.
+    /// </summary>
+    public void ClearStatusTintCache() => StatusTintCache.DisposeAndClear();
 
     /// <summary>
     ///     Disposes all cached per-layer SKImages. Call on map change or renderer disposal.
@@ -333,6 +359,9 @@ public sealed class AislingRenderer : IDisposable
             EntityTintType.Highlight => TintedTextureCache.GetOrAdd(drawTexture, static src => ImageUtil.BuildHoverTinted(TextureConverter.Device, src)),
             EntityTintType.Group     => GroupTintCache.GetOrAdd(drawTexture, static src => ImageUtil.BuildGroupTinted(TextureConverter.Device, src)),
             EntityTintType.HitTint   => HitTintCache.GetOrAdd(drawTexture, static src => ImageUtil.BuildHitTinted(TextureConverter.Device, src)),
+            EntityTintType.Status    => StatusTintCache.TryGetValue((drawTexture, p.StatusTint.PackedValue), out var st)
+                ? st
+                : StatusTintCache[(drawTexture, p.StatusTint.PackedValue)] = ImageUtil.BuildColorTinted(TextureConverter.Device, drawTexture, p.StatusTint),
             _                        => drawTexture
         };
 

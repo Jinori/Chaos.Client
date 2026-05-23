@@ -34,7 +34,12 @@ public enum EntityTintType
     /// <summary>
     ///     Projectile impact hit flash (red 50% blend).
     /// </summary>
-    HitTint
+    HitTint,
+
+    /// <summary>
+    ///     Server-assigned status tint from <see cref="WorldEntity.TintColor" />.
+    /// </summary>
+    Status
 }
 
 /// <summary>

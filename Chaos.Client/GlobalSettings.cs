@@ -28,13 +28,13 @@ public static class GlobalSettings
 
     public static string LobbyHost
         => Environment.GetEnvironmentVariable("DA_LOBBY_HOST") ??
-            "chaotic-minds.dynu.net";
-            //"127.0.0.1";
+            //"chaotic-minds.dynu.net";
+            "127.0.0.1";
             //"da0.kru.com";
 
     public static int LobbyPort
-        => short.TryParse(Environment.GetEnvironmentVariable("DA_LOBBY_PORT"), out var val) ? val : 6900;
-            //4200;
+        => short.TryParse(Environment.GetEnvironmentVariable("DA_LOBBY_PORT"), out var val) ? val : //6900;
+            4200;
             //2610;
 
     /// <summary>

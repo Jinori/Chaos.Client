@@ -483,6 +483,11 @@ public sealed class ConnectionManager : IDisposable
     public event DisplayVisibleEntitiesHandler? OnDisplayVisibleEntities;
 
     /// <summary>
+    ///     Fired when an entity's tint color is set.
+    /// </summary>
+    public event SetEntityTintHandler? OnSetEntityTint;
+
+    /// <summary>
     ///     Fired when door states are updated.
     /// </summary>
     public event DoorHandler? OnDoor;
@@ -1281,6 +1286,7 @@ public sealed class ConnectionManager : IDisposable
         PacketHandlers[(byte)ServerOpCode.Location] = HandleLocation;
         PacketHandlers[(byte)ServerOpCode.Attributes] = HandleAttributes;
         PacketHandlers[(byte)ServerOpCode.DisplayVisibleEntities] = HandleDisplayVisibleEntities;
+        PacketHandlers[(byte)ServerOpCode.SetEntityTint] = HandleSetEntityTint;
         PacketHandlers[(byte)ServerOpCode.DisplayAisling] = HandleDisplayAisling;
 
         //world entities
@@ -1574,6 +1580,12 @@ public sealed class ConnectionManager : IDisposable
     {
         var args = Client.Deserialize<DisplayVisibleEntitiesArgs>(in pkt);
         OnDisplayVisibleEntities?.Invoke(args);
+    }
+
+    private void HandleSetEntityTint(ServerPacket pkt)
+    {
+        var args = Client.Deserialize<SetEntityTintArgs>(in pkt);
+        OnSetEntityTint?.Invoke(args);
     }
 
     private void HandleDisplayAisling(ServerPacket pkt)

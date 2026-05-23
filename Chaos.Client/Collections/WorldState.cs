@@ -1,5 +1,6 @@
 #region
 using Chaos.Client.Data;
+using Chaos.Client.Data.Definitions;
 using Chaos.Client.Data.Models;
 using Chaos.Client.Extensions;
 using Chaos.Client.Models;
@@ -247,6 +248,23 @@ public static class WorldState
         }
 
         SortVersion++;
+    }
+
+    /// <summary>
+    ///     Applies a server-sent sprite tint to an entity, creating a placeholder entry if it isn't tracked yet.
+    /// </summary>
+    public static void SetEntityTint(SetEntityTintArgs args)
+    {
+        if (!Entities.TryGetValue(args.Id, out var entity))
+        {
+            entity = new WorldEntity
+            {
+                Id = args.Id
+            };
+            Entities[args.Id] = entity;
+        }
+
+        entity.TintColor = args.TintColor;
     }
 
     /// <summary>

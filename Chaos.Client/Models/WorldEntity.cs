@@ -1,5 +1,6 @@
 #region
 using Chaos.Client.Collections;
+using Chaos.Client.Data.Definitions;
 using Chaos.Client.Systems;
 using Chaos.DarkAges.Definitions;
 using Chaos.Geometry.Abstractions.Definitions;
@@ -87,6 +88,9 @@ public sealed class WorldEntity
     public bool IsHidden { get; set; }
     public byte ItemColor { get; set; }
     public LanternSize LanternSize { get; set; }
+
+    /// <summary>Server-driven status tint applied as a 50% color wash. LegendColor.None (0) = no tint.</summary>
+    public LegendColor TintColor { get; set; }
     public string Name { get; set; } = string.Empty;
     public NameTagStyle NameTagStyle { get; set; }
     public RestPosition RestPosition { get; set; }

@@ -126,6 +126,7 @@ public sealed class ChaosGame : Game
         WorldState.SubscribeTo(Connection);
         Connection.OnDisplayVisibleEntities += WorldState.AddOrUpdateVisibleEntities;
         Connection.OnDisplayAisling += WorldState.AddOrUpdateAisling;
+        Connection.OnSetEntityTint += WorldState.SetEntityTint;
 
         //removeentity wired in worldscreen — it needs to capture the creature sprite for
         //the death dissolve animation before removing the entity from worldstate.

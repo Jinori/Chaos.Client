@@ -448,6 +448,9 @@ public sealed partial class WorldScreen
         if (WorldState.CurrentFrame.ShowTintHighlight && (WorldState.CurrentFrame.HoveredEntityId == entity.Id))
             return EntityTintType.Highlight;
 
+        if ((byte)entity.TintColor != 0)
+            return EntityTintType.Status;
+
         if (GroupHighlightedIds.Contains(entity.Id))
             return EntityTintType.Group;
 
@@ -592,6 +595,8 @@ public sealed partial class WorldScreen
         //mirror the aisling convention — swimming tiles replace the normal sprite path and must not double-tint the creature.
         var groundPaintHeight = entity.IsOnSwimmingTile ? 0 : entity.GroundPaintHeight;
 
+        var statusTint = tint == EntityTintType.Status ? LegendColors.Get(entity.TintColor) : default;
+
         return creatureRenderer.Draw(
             spriteBatch,
             Camera,
@@ -602,6 +607,7 @@ public sealed partial class WorldScreen
             tileCenterY,
             entity.VisualOffset,
             tint,
+            statusTint,
             groundPaintHeight,
             entity.GroundTintColor,
             alpha);
@@ -713,6 +719,7 @@ public sealed partial class WorldScreen
             tileCenterY,
             entity.VisualOffset,
             tint,
+            tint == EntityTintType.Status ? LegendColors.Get(entity.TintColor) : default,
             isDead,
             alpha);
 

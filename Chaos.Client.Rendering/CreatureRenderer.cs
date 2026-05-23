@@ -24,6 +24,8 @@ public sealed class CreatureRenderer : IDisposable
     //keyed by (source frame texture, paint height, packed argb) — one entry per unique gndattr/tile combo per frame. Cleared on map change.
     private readonly Dictionary<(Texture2D Source, int PaintHeight, uint PackedColor), Texture2D> GroundTintCache = [];
 
+    private readonly Dictionary<(Texture2D Source, uint PackedColor), Texture2D> StatusTintCache = [];
+
     //average of (CenterY - Top) across all frames, keyed by spriteId.
     //used by overlay positioning to derive a stable "sprite top" for each creature sprite.
     //uses the frame's visible top row, which differs from the bitmap top row when Top > 0 (transparent padding).
@@ -51,6 +53,7 @@ public sealed class CreatureRenderer : IDisposable
         HighlightTintCache.DisposeAndClear();
         GroupTintCache.DisposeAndClear();
         HitTintCache.DisposeAndClear();
+        StatusTintCache.DisposeAndClear();
     }
 
     /// <summary>
@@ -67,6 +70,7 @@ public sealed class CreatureRenderer : IDisposable
         float tileCenterY,
         Vector2 visualOffset,
         EntityTintType tint,
+        Color statusTint,
         int groundPaintHeight,
         Color groundTintColor,
         float alpha = 1f)
@@ -116,6 +120,9 @@ public sealed class CreatureRenderer : IDisposable
                 EntityTintType.Highlight => HighlightTintCache.GetOrAdd(sourceTexture, static src => ImageUtil.BuildHoverTinted(TextureConverter.Device, src)),
                 EntityTintType.Group     => GroupTintCache.GetOrAdd(sourceTexture, static src => ImageUtil.BuildGroupTinted(TextureConverter.Device, src)),
                 EntityTintType.HitTint   => HitTintCache.GetOrAdd(sourceTexture, static src => ImageUtil.BuildHitTinted(TextureConverter.Device, src)),
+                EntityTintType.Status => StatusTintCache.TryGetValue((sourceTexture, statusTint.PackedValue), out var st)
+                    ? st
+                    : StatusTintCache[(sourceTexture, statusTint.PackedValue)] = ImageUtil.BuildColorTinted(TextureConverter.Device, sourceTexture, statusTint),
                 _                        => sourceTexture
             };
 
