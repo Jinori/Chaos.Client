@@ -205,6 +205,7 @@ public sealed class EntityOverlayManager
                 continue;
 
             //neutralhover/friendlyhover: only show on hover, and not during targeting/dragging
+            //friendly: always shown (like hostile/neutral), but rendered in the friendly color
             //never show hover nametag for the player's own character
             var isHoverOnly = entity.NameTagStyle is NameTagStyle.NeutralHover or NameTagStyle.FriendlyHover;
 
@@ -213,10 +214,10 @@ public sealed class EntityOverlayManager
 
             var nameColor = entity.NameTagStyle switch
             {
-                NameTagStyle.Hostile       => LegendColors.Red,
-                _ when isMerchant          => LegendColors.CornflowerBlue,
-                NameTagStyle.FriendlyHover => LegendColors.Lime,
-                _                          => TextColors.Default
+                NameTagStyle.Hostile                                  => LegendColors.Red,
+                _ when isMerchant                                     => LegendColors.CornflowerBlue,
+                NameTagStyle.FriendlyHover or NameTagStyle.Friendly   => LegendColors.Lime,
+                _                                                     => TextColors.Default
             };
 
             if (!NameTagCache.TryGetValue(entity.Id, out var cachedText))
