@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Input;
 namespace Chaos.Client.Controls.World.Popups.Options;
 
 /// <summary>
-///     Settings panel using _nsett prefab. Triggered by F4 key. 13 toggle settings in 2 columns (10 left, 3 right).
+///     Settings panel using _nsett prefab. Triggered by F4 key. Up to 20 toggle settings in 2 columns (10 per column).
 ///     Number buttons from _nsettb.spf (2 frames per setting: normal, pressed). Layout derived from TopButton/TopText/
 ///     BottomText/RightText prefab rects: ROW_HEIGHT=21, COLUMN_OFFSET=211, ROWS_PER_COLUMN=10.
 /// </summary>
@@ -49,7 +49,7 @@ public sealed class SettingsControl : PrefabPanel
             OkButton.Clicked += Close;
 
         //create per-setting number buttons from _nsettb.spf (2 frames per setting: normal, pressed)
-        //2-column layout: settings 0-9 in left column, 10-12 in right column
+        //2-column layout: settings 0-9 in left column, 10-19 in right column
         var cache = UiRenderer.Instance!;
 
         for (var i = 0; i < UserOptions.SETTING_COUNT; i++)

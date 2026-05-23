@@ -1,29 +1,37 @@
 namespace Chaos.Client.ViewModel;
 
 /// <summary>
-///     Unified source of truth for all 13 settings in the F4 settings panel. Settings 0-5 and 7 are server-controlled
-///     (toggled via opcode 0x1B, names/values set by server response). Settings 6 and 8-12 are client-local (persisted to
-///     Darkages.cfg). Uses 0-based indexing matching the UI layout.
+///     Unified source of truth for all 20 settings in the F4 settings panel. Server-controlled settings (indices 0-5, 7,
+///     and 13) are toggled via opcode 0x1B with names/values set by the server response; the remaining slots are
+///     client-local (persisted to Darkages.cfg) or reserved. Uses 0-based indexing matching the UI layout, where display
+///     slot i maps to server UserOption (i+1).
 /// </summary>
 public sealed class UserOptions
 {
-    public const int SETTING_COUNT = 13;
+    public const int SETTING_COUNT = 20;
 
     private static readonly bool[] ServerSettings =
     [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true, //0-5
-        false, //6
-        true, //7
-        false,
-        false,
-        false,
-        false,
-        false //8-12
+        true,  //0  server: Show body animations
+        true,  //1  server: Listen to hit sounds
+        true,  //2  server: Priority animations
+        true,  //3  server: Lock hands
+        true,  //4  server: Sound on whisper
+        true,  //5  server: Allow exchanges
+        false, //6  client-local: Use Group Window
+        true,  //7  server: Hide enemy health bars
+        false, //8  client-local: Scroll Screen
+        false, //9  client-local: Shift key
+        false, //10 client-local: Click character profile
+        false, //11 client-local: NPC record mundane chat
+        false, //12 client-local: Group recruiting
+        true,  //13 server: Show Friendly Nametags (Option14)
+        false, //14 reserved
+        false, //15 reserved
+        false, //16 reserved
+        false, //17 reserved
+        false, //18 reserved
+        false  //19 reserved
     ];
 
     private readonly bool[] Settings = new bool[SETTING_COUNT];

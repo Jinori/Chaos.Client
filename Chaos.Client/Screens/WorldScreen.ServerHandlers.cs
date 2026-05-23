@@ -322,36 +322,46 @@ public sealed partial class WorldScreen
 
     /// <summary>
     ///     Parses the server's UserOptions response. Two formats:
-    ///     Full request: "0{desc}:{state}\t{desc}:{state}\t..." — '0' prefix, digits stripped, options ordered by position.
-    ///     Single toggle: "{digit}{desc}:{state}" — leading digit identifies the option (1-based).
+    ///     Full request: "0{desc}:{state}\t{desc}:{state}\t..." — '0' prefix, then up to 20 positional entries (digits
+    ///     stripped server-side), ordered by display slot.
+    ///     Single toggle: "{number}{desc}:{state}" — leading number (1-based, may be multiple digits) identifies the option.
     /// </summary>
     private void ParseUserOptions(string message)
     {
         if (message.Length < 2)
             return;
 
-        //single option toggle response: "{digit}{description,-25}:{on/off,-3}"
+        //single option toggle response: "{number}{description,-25}:{on/off,-3}"
         if (message[0] != '0')
         {
             if (!char.IsDigit(message[0]))
                 return;
 
-            var optionIndex = message[0] - '1';
+            //read the (possibly multi-digit) leading option number
+            var digitCount = 0;
+
+            while ((digitCount < message.Length) && char.IsDigit(message[digitCount]))
+                digitCount++;
+
+            if (!int.TryParse(message.AsSpan(0, digitCount), out var optionNumber))
+                return;
+
+            var optionIndex = optionNumber - 1;
 
             if (optionIndex is < 0 or >= UserOptions.SETTING_COUNT)
                 return;
 
-            ParseOptionEntry(optionIndex, message[1..]);
+            ParseOptionEntry(optionIndex, message[digitCount..]);
 
             return;
         }
 
         //full request response: "0{opt1_desc}:{state}\t{opt2_desc}:{state}\t..."
-        //leading '0' prefix, then 8 options in order with digits stripped
+        //leading '0' prefix, then up to SETTING_COUNT options in display-slot order with digits stripped
         var entries = message[1..]
             .Split('\t', StringSplitOptions.RemoveEmptyEntries);
 
-        for (var i = 0; (i < entries.Length) && (i < 8); i++)
+        for (var i = 0; (i < entries.Length) && (i < UserOptions.SETTING_COUNT); i++)
             ParseOptionEntry(i, entries[i]);
     }
 
