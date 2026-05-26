@@ -1,95 +1,75 @@
+#region
+using Chaos.Client.Systems;
+#endregion
+
 namespace Chaos.Client.ViewModel;
 
 /// <summary>
-///     Unified source of truth for all 20 settings in the F4 settings panel. Server-controlled settings (indices 0-5, 7,
-///     and 13) are toggled via opcode 0x1B with names/values set by the server response; the remaining slots are
-///     client-local (persisted to Darkages.cfg) or reserved. Uses 0-based indexing matching the UI layout, where display
-///     slot i maps to server UserOption (i+1).
+///     Source of truth for the F4 toggle values, driven by <see cref="SettingDefinitions" />. Server-controlled settings
+///     update via the 0x1B response; client-local settings persist to Darkages.cfg; the group-recruiting toggle is
+///     server-authoritative. Replaces the old fixed 20-slot magic-index model.
 /// </summary>
 public sealed class UserOptions
 {
-    public const int SETTING_COUNT = 20;
+    private readonly Dictionary<SettingKey, bool> Values = new();
 
-    private static readonly bool[] ServerSettings =
-    [
-        true,  //0  server: Show body animations
-        true,  //1  server: Listen to hit sounds
-        true,  //2  server: Priority animations
-        true,  //3  server: Lock hands
-        true,  //4  server: Sound on whisper
-        true,  //5  server: Allow exchanges
-        false, //6  client-local: Use Group Window
-        true,  //7  server: Hide enemy health bars
-        false, //8  client-local: Scroll Screen
-        false, //9  client-local: Shift key
-        false, //10 client-local: Click character profile
-        false, //11 client-local: NPC record mundane chat
-        false, //12 client-local: Group recruiting
-        true,  //13 server: Show Friendly Nametags (Option14)
-        false, //14 reserved
-        false, //15 reserved
-        false, //16 reserved
-        false, //17 reserved
-        false, //18 reserved
-        false  //19 reserved
-    ];
-
-    private readonly bool[] Settings = new bool[SETTING_COUNT];
-
-    public static bool IsServerSetting(int index) => index is >= 0 and < SETTING_COUNT && ServerSettings[index];
-
-    public bool this[int index] => index is >= 0 and < SETTING_COUNT && Settings[index];
-
-    /// <summary>
-    ///     Fires on any value change (server response or client toggle). Used by UI to refresh labels.
-    /// </summary>
-    public event UserOptionChangedHandler? SettingChanged;
-
-    /// <summary>
-    ///     Fires only on user-initiated toggles. Used by WorldScreen to route to server or persist locally.
-    /// </summary>
-    public event UserOptionChangedHandler? SettingToggled;
-
-    /// <summary>
-    ///     Sets a value and fires <see cref="SettingChanged" />. Used for server responses and initialization.
-    /// </summary>
-    public void SetValue(int index, bool value)
+    public UserOptions()
     {
-        if (index is < 0 or >= SETTING_COUNT)
-            return;
+        foreach (var def in SettingDefinitions.All)
+            Values[def.Key] = false;
+    }
 
-        Settings[index] = value;
-        SettingChanged?.Invoke(index, value);
+    /// <summary>Fires on any value change (server response, init, or client toggle). Used by the UI to refresh checkboxes.</summary>
+    public event SettingValueChangedHandler? ValueChanged;
+
+    /// <summary>Fires only on user-initiated toggles. Used by WorldScreen to route server-controlled toggles to the network.</summary>
+    public event SettingValueChangedHandler? UserToggled;
+
+    public bool Value(SettingKey key) => Values.TryGetValue(key, out var v) && v;
+
+    /// <summary>Sets a value from an external source (server response or init) and raises <see cref="ValueChanged" />.</summary>
+    public void Apply(SettingKey key, bool value)
+    {
+        Values[key] = value;
+        ValueChanged?.Invoke(key, value);
     }
 
     /// <summary>
-    ///     Handles a user-initiated button click. For client settings, toggles the value and fires both events. For server
-    ///     settings, only fires <see cref="SettingToggled" /> — the value updates when the server responds.
+    ///     Handles a user click. Client-local settings flip + persist immediately; server-controlled settings only raise
+    ///     <see cref="UserToggled" /> — their value updates when the server responds.
     /// </summary>
-    public void Toggle(int index)
+    public void Toggle(SettingKey key)
     {
-        if (index is < 0 or >= SETTING_COUNT)
-            return;
+        var def = SettingDefinitions.ByKey(key);
 
-        if (IsServerSetting(index))
+        if (def.Category == SettingCategory.ClientLocal)
         {
-            SettingToggled?.Invoke(index, !Settings[index]);
+            var newValue = !Value(key);
+            Values[key] = newValue;
+            def.Set?.Invoke(newValue);
+            ClientSettings.Save();
+            ValueChanged?.Invoke(key, newValue);
 
             return;
         }
 
-        Settings[index] = !Settings[index];
-        SettingChanged?.Invoke(index, Settings[index]);
-        SettingToggled?.Invoke(index, Settings[index]);
+        //server-controlled / server-authoritative: don't flip locally; server response will Apply the new value
+        UserToggled?.Invoke(key, !Value(key));
     }
 
-    /// <summary>
-    ///     Clears only server-controlled settings, leaving client-local settings intact.
-    /// </summary>
+    /// <summary>Seeds client-local and server-authoritative-local values from <see cref="ClientSettings" /> (call after ClientSettings.Load). The only caller of each definition's Get hook.</summary>
+    public void SeedLocalDefaults()
+    {
+        foreach (var def in SettingDefinitions.All)
+            if (def.Get is not null)
+                Apply(def.Key, def.Get());
+    }
+
+    /// <summary>Clears only server-controlled settings, leaving client-local values intact.</summary>
     public void ClearServerSettings()
     {
-        for (var i = 0; i < SETTING_COUNT; i++)
-            if (IsServerSetting(i))
-                Settings[i] = false;
+        foreach (var def in SettingDefinitions.All)
+            if (def.Category == SettingCategory.ServerOption)
+                Values[def.Key] = false;
     }
 }

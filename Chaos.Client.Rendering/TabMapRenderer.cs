@@ -514,7 +514,7 @@ public sealed class TabMapRenderer : IDisposable
     {
         for (var i = 0; i < offsets.Length; i++)
         {
-            var (dx, dy) = offsets[i];
+            (var dx, var dy) = offsets[i];
             var tx = centerX + dx;
             var ty = centerY + dy;
 

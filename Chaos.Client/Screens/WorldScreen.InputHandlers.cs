@@ -1218,7 +1218,7 @@ public sealed partial class WorldScreen
                     {
                         var firstEmptySlot = WorldState.Inventory.GetFirstEmptySlot();
                         Game.Connection.PickupItem(entity.TileX, entity.TileY, firstEmptySlot);
-                    } else if ((entity.Type != ClientEntityType.Aisling) || ClientSettings.EnableProfileClick)
+                    } else if ((entity.Type != ClientEntityType.Aisling) || ClientSettings.ClickToOpenProfile)
                         Game.Connection.ClickEntity(entity.Id);
                 }
             }
@@ -1414,7 +1414,7 @@ public sealed partial class WorldScreen
         if (entity is not null
             && (entity.Type == ClientEntityType.Aisling)
             && (entity.Id == Game.Connection.AislingId)
-            && ClientSettings.EnableProfileClick)
+            && ClientSettings.ClickToOpenProfile)
         {
             SelfProfileRequested = true;
             Game.Connection.RequestSelfProfile();

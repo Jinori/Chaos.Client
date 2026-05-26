@@ -271,54 +271,25 @@ public sealed partial class WorldScreen : IScreen
         var optionsAnchorX = WorldHud.ViewportBounds.X + WorldHud.ViewportBounds.Width - MainOptions.Width + 10;
         var optionsAnchorY = WorldHud.ViewportBounds.Y;
 
-        //initialize client-local settings into useroptions from persisted config
+        //seed client-local + group values from persisted config
         var userOptions = WorldState.UserOptions;
-        userOptions.SetValue(6, ClientSettings.UseGroupWindow);
-        userOptions.SetValue(8, ClientSettings.ScrollLevel > 0);
-        userOptions.SetValue(9, ClientSettings.UseShiftKeyForAltPanels);
-        userOptions.SetValue(10, ClientSettings.EnableProfileClick);
-        userOptions.SetValue(11, ClientSettings.RecordNpcChat);
-        userOptions.SetValue(12, ClientSettings.GroupOpen);
+        userOptions.SeedLocalDefaults();
 
-        //route user-initiated toggles to server or local persistence
-        userOptions.SettingToggled += (index, value) =>
+        //route user-initiated toggles for server-controlled settings to the network
+        userOptions.UserToggled += (key, _) =>
         {
-            if (UserOptions.IsServerSetting(index))
+            var def = SettingDefinitions.ByKey(key);
+
+            switch (def.Category)
             {
-                var option = (UserOption)(index + 1);
-                Game.Connection.SendOptionToggle(option);
-            } else
-            {
-                switch (index)
-                {
-                    case 6:
-                        ClientSettings.UseGroupWindow = value;
+                case SettingCategory.ServerOption:
+                    Game.Connection.SendOptionToggle(def.UserOption!.Value);
 
-                        break;
-                    case 8:
-                        ClientSettings.ScrollLevel = value ? 1 : 0;
+                    break;
+                case SettingCategory.ServerAuthoritativeLocal:
+                    def.OnServerToggle?.Invoke(Game.Connection);
 
-                        break;
-                    case 9:
-                        ClientSettings.UseShiftKeyForAltPanels = value;
-
-                        break;
-                    case 10:
-                        ClientSettings.EnableProfileClick = value;
-
-                        break;
-                    case 11:
-                        ClientSettings.RecordNpcChat = value;
-
-                        break;
-                    case 12:
-                        //server-authoritative — send toggle, server responds with updated profile
-                        Game.Connection.ToggleGroup();
-
-                        return;
-                }
-
-                ClientSettings.Save();
+                    break;
             }
         };
 

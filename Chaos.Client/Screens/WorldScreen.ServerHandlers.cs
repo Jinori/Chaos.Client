@@ -233,7 +233,7 @@ public sealed partial class WorldScreen
             _                       => LegendColors.White
         };
 
-        if (!isNpc || ClientSettings.RecordNpcChat)
+        if (!isNpc || ClientSettings.NpcRecordChat)
             WorldState.Chat.AddMessage(args.Message, color);
 
         if (entity is null)
@@ -348,7 +348,7 @@ public sealed partial class WorldScreen
 
             var optionIndex = optionNumber - 1;
 
-            if (optionIndex is < 0 or >= UserOptions.SETTING_COUNT)
+            if (optionIndex < 0)
                 return;
 
             ParseOptionEntry(optionIndex, message[digitCount..]);
@@ -357,20 +357,23 @@ public sealed partial class WorldScreen
         }
 
         //full request response: "0{opt1_desc}:{state}\t{opt2_desc}:{state}\t..."
-        //leading '0' prefix, then up to SETTING_COUNT options in display-slot order with digits stripped
+        //leading '0' prefix, then the tab-delimited option entries in UserOption order with digits stripped
         var entries = message[1..]
             .Split('\t', StringSplitOptions.RemoveEmptyEntries);
 
-        for (var i = 0; (i < entries.Length) && (i < UserOptions.SETTING_COUNT); i++)
+        for (var i = 0; i < entries.Length; i++)
             ParseOptionEntry(i, entries[i]);
     }
 
     /// <summary>
-    ///     Parses a single option entry in the format "{description,-25}:{ON/OFF,-3}" and applies it.
+    ///     Parses a single 0x1B option entry in the format "{description,-25}:{ON/OFF,-3}". Entry index i corresponds to
+    ///     UserOption(i+1); only entries matching a server-controlled SettingDefinition are applied (others are blank).
     /// </summary>
     private void ParseOptionEntry(int optionIndex, string entry)
     {
-        if (!UserOptions.IsServerSetting(optionIndex))
+        var def = SettingDefinitions.ByUserOption((UserOption)(optionIndex + 1));
+
+        if (def is null)
             return;
 
         var colonIdx = entry.LastIndexOf(':');
@@ -378,13 +381,11 @@ public sealed partial class WorldScreen
         if (colonIdx < 1)
             return;
 
-        var stateStr = entry[(colonIdx + 1)..]
-            .Trim();
-        var isOn = stateStr.StartsWithI("ON");
+        var isOn = entry[(colonIdx + 1)..]
+                   .Trim()
+                   .StartsWithI("ON");
 
-        //server settings: use the full formatted text as the display name (includes :on/:off)
-        SettingsDialog.SetSettingName(optionIndex, entry.TrimEnd());
-        WorldState.UserOptions.SetValue(optionIndex, isOn);
+        WorldState.UserOptions.Apply(def.Key, isOn);
     }
 
     //--- npc dialog / menu ---
@@ -659,7 +660,7 @@ public sealed partial class WorldScreen
             {
                 WorldState.Chat.AddOrangeBarMessage($"{sourceName} invites you to join a group.");
 
-                if (!ClientSettings.UseGroupWindow)
+                if (!ClientSettings.AutoAcceptGroupInvites)
                 {
                     Game.Connection.SendGroupInvite(ClientGroupSwitch.AcceptInvite, sourceName);
 
@@ -840,7 +841,7 @@ public sealed partial class WorldScreen
 
         //group open state — server is source of truth, sync all ui
         StatusBook.SetGroupOpen(args.GroupOpen);
-        WorldState.UserOptions.SetValue(12, args.GroupOpen);
+        WorldState.UserOptions.Apply(SettingKey.AllowGroupInvites, args.GroupOpen);
         WorldHud.SetGroupOpen(args.GroupOpen);
 
         //group members — parse groupstring into state, ui subscribes via event

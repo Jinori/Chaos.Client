@@ -145,7 +145,7 @@ public static class DamageNumberFont
     private static Color[] BuildGlyph(int digit, bool isHeal)
     {
         var rows = Digits[digit];
-        var (top, mid, bot) = isHeal ? (HealTop, HealMid, HealBot) : (DmgTop, DmgMid, DmgBot);
+        (var top, var mid, var bot) = isHeal ? (HealTop, HealMid, HealBot) : (DmgTop, DmgMid, DmgBot);
 
         bool Lit(int r, int c) => (r >= 0) && (r < GLYPH_H) && (c >= 0) && (c < GLYPH_W) && (rows[r][c] == '1');
 

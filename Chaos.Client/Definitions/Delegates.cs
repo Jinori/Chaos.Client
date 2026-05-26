@@ -130,9 +130,9 @@ public delegate void ExchangeAmountRequestedHandler(byte fromSlot);
 public delegate void GroupInviteReceivedHandler();
 
 /// <summary>
-///     Fires on any user option value change (server response or client toggle).
+///     Fires when a setting value changes (server response, init, or user toggle).
 /// </summary>
-public delegate void UserOptionChangedHandler(int setting, bool enabled);
+public delegate void SettingValueChangedHandler(Chaos.Client.ViewModel.SettingKey key, bool enabled);
 #endregion
 
 #region Controls/Components Delegates

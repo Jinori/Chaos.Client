@@ -178,7 +178,7 @@ public sealed partial class WorldScreen
                 MapLoading.SetProgress,
                 static id => DoorTable.GetVariants((short)id).Select(static v => (int)v));
 
-            var (pathfinder, waterTiles, doorTiles) = BuildPathfinder(MapFile);
+            (var pathfinder, var waterTiles, var doorTiles) = BuildPathfinder(MapFile);
             MapPathfinder = pathfinder;
             MapWaterTiles = waterTiles;
             MapDoorTiles = doorTiles;

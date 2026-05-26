@@ -64,7 +64,7 @@ public sealed class HotkeyHelpControl : PrefabPanel
             //standard single-rect key group
             if (keyPrefabSet.Contains(name))
             {
-                var (element, texture) = CreateKeyElement(keyPrefabSet[name], mainRect);
+                (var element, var texture) = CreateKeyElement(keyPrefabSet[name], mainRect);
 
                 if (element is not null)
                 {
@@ -86,7 +86,7 @@ public sealed class HotkeyHelpControl : PrefabPanel
                 if (!keyPrefabSet.Contains(subName))
                     continue;
 
-                var (sub, subTex) = CreateKeyElement(keyPrefabSet[subName], mainRect);
+                (var sub, var subTex) = CreateKeyElement(keyPrefabSet[subName], mainRect);
 
                 if (sub is not null)
                 {
