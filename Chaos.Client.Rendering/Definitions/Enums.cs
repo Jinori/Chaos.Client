@@ -1,8 +1,8 @@
 namespace Chaos.Client.Rendering.Definitions;
 
 /// <summary>
-///     The type of a visible entity in the game world. Ordered by draw priority: ground items render first (underneath),
-///     then creatures, then aislings.
+///     The type of a visible entity in the game world. Painter's draw order (back-to-front) is ground items first
+///     (underneath), then aislings, then creatures (on top); note this differs from this enum's numeric order.
 /// </summary>
 public enum ClientEntityType : byte
 {

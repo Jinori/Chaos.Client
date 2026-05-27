@@ -21,20 +21,18 @@ public sealed partial class WorldScreen
         //sort once per frame — cached via dirty flag, reused by all draw sub-passes
         var sortedEntities = WorldState.CurrentFrame.SortedEntities;
 
-        //pre-render silhouettes (local-player overdraw) before world drawing —
-        //matches retail's FUN_005d4360 which redraws the local player at 50% alpha after foregrounds.
+        //pre-render silhouettes of ALL visible entities (items, monsters, merchants, aislings) before world
+        //drawing. each entity is redrawn at 50% over the finished world: invisible in the open (self-blend over
+        //identical pixels) but shown through where a foreground tile occluded it. transparent entities compound
+        //multiplicatively (~50% open, ~25% behind walls). extends retail's local-player overdraw (FUN_005d4360).
         if (MapFile is not null && MapPreloaded)
         {
             SilhouetteRenderer.Clear();
 
-            var player = WorldState.GetPlayerEntity();
-
-            //silhouette the player unconditionally. when non-transparent and in the open, the overdraw
-            //blends with the identical stripe-pass pixel (no visible change). behind foregrounds, the
-            //overdraw shows the player through walls at 50%. transparent players compound multiplicatively:
-            //~50% visible in the open, ~25% visible behind walls.
-            if (player is not null)
-                SilhouetteRenderer.AddSilhouette(player.Id);
+            //feed every visible entity in the stripe's paint order, EXCEPT the local player which is appended last
+            //so its silhouette overdraws on top of all other entities (restores retail's always-see-yourself
+            //behavior). order matches the world pass so non-player silhouettes self-blend to a no-op in the open.
+            CollectSilhouetteEntities(sortedEntities);
 
             //pre-render silhouettes into a screen-sized rt (must happen before main rt drawing starts,
             //because rt switching discards the main rt's contents). DrawingForSilhouette routes transparent
@@ -377,6 +375,66 @@ public sealed partial class WorldScreen
                     depth - tileX,
                     AnimationTick);
         }
+    }
+
+    /// <summary>
+    ///     Populates the silhouette renderer with every visible entity, in the exact paint order the stripe pass
+    ///     uses. Matching that order is what keeps the 50% silhouette overlay invisible in the open (each entity is
+    ///     redrawn over its own identical pixels — a no-op) while still showing entities through foreground
+    ///     occlusion. Extends retail's local-player overdraw (FUN_005d4360) to all entities. The local player is
+    ///     appended LAST (after the depth loop) so its silhouette composites on top of every other entity.
+    ///     Order MUST mirror <see cref="DrawForegroundAndEntities" />: depth-major, and within a depth ground items →
+    ///     aislings → creatures. If it diverges, overlapping entities in the open self-blend imperfectly and ghost.
+    /// </summary>
+    private void CollectSilhouetteEntities(IReadOnlyList<WorldEntity> sortedEntities)
+    {
+        if (MapFile is null)
+            return;
+
+        (var fgMinX, var fgMinY, var fgMaxX, var fgMaxY) = Camera.GetVisibleTileBounds(
+            MapFile.Width,
+            MapFile.Height,
+            MapRenderer.ForegroundExtraMargin);
+
+        var minDepth = fgMinX + fgMinY;
+        var maxDepth = fgMaxX + fgMaxY;
+        var entityIndex = 0;
+        var entityCount = sortedEntities.Count;
+        var playerId = WorldState.PlayerEntityId;
+
+        //skip entities before the visible depth range (mirrors the stripe)
+        while ((entityIndex < entityCount) && (sortedEntities[entityIndex].SortDepth < minDepth))
+            entityIndex++;
+
+        for (var depth = minDepth; depth <= maxDepth; depth++)
+        {
+            var stripeStart = entityIndex;
+
+            while ((entityIndex < entityCount) && (sortedEntities[entityIndex].SortDepth == depth))
+                entityIndex++;
+
+            var stripeEnd = entityIndex;
+
+            //order MUST match DrawForegroundAndEntities: ground items, then aislings, then creatures
+            for (var i = stripeStart; i < stripeEnd; i++)
+                if (sortedEntities[i].Type == ClientEntityType.GroundItem)
+                    SilhouetteRenderer.AddSilhouette(sortedEntities[i].Id);
+
+            //skip the local player here; it is appended last (after the depth loop) so it overdraws on top of all others
+            for (var i = stripeStart; i < stripeEnd; i++)
+                if ((sortedEntities[i].Type == ClientEntityType.Aisling) && (sortedEntities[i].Id != playerId))
+                    SilhouetteRenderer.AddSilhouette(sortedEntities[i].Id);
+
+            for (var i = stripeStart; i < stripeEnd; i++)
+                if (sortedEntities[i].Type == ClientEntityType.Creature)
+                    SilhouetteRenderer.AddSilhouette(sortedEntities[i].Id);
+        }
+
+        //local player last → its silhouette composites on top of every other entity (retail's local-player overdraw).
+        //intentional paint-order divergence: only the player overdraws; all other entities stay in stripe order so
+        //they still self-blend to a no-op in the open.
+        if (WorldState.GetEntity(playerId) is not null)
+            SilhouetteRenderer.AddSilhouette(playerId);
     }
 
     private void DrawDyingEffectsAtDepth(SpriteBatch spriteBatch, int depth)
