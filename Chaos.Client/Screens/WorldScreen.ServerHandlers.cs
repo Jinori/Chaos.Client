@@ -1214,7 +1214,7 @@ public sealed partial class WorldScreen
 
         //unexpected disconnect — show reconnect prompt (skip if this is part of a redirect sequence)
         if ((newState == ConnectionState.Disconnected) && !RedirectInProgress)
-            DisconnectPopup.Show("Connection lost.");
+            DisconnectPopup.Show("The connection has been dropped. Do you wish to log on again?");
     }
 
     //--- helpers ---
