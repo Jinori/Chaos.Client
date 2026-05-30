@@ -104,7 +104,7 @@ public sealed class MarketSearchControl : UIPanel
     /// <remarks>
     ///     Class/AdvClass: dropdown index maps directly (0 = Any).
     ///     EquipmentType: mapped via <see cref="EquipTypeMap" /> (UI list skips OverArmor/OverHelmet/Accessory).
-    ///     StatFilters: one entry per chip; MinValue is 0 until per-chip threshold editing is implemented.
+    ///     StatFilters: one entry per chip; presence-only (the item must have the stat) — there is no threshold value.
     /// </remarks>
     public MarketSearchCriteria GetCriteria()
     {
@@ -127,7 +127,7 @@ public sealed class MarketSearchControl : UIPanel
 
         foreach (var chip in StatChips)
             if (StatKeyToMarketStat(chip.StatKey) is { } stat)
-                criteria.StatFilters.Add(new MarketStatFilter { Stat = stat, MinValue = 0 }); // TODO: use the chip's threshold once per-chip threshold editing exists (StatFilterChip has no value yet)
+                criteria.StatFilters.Add(new MarketStatFilter { Stat = stat });
 
         return criteria;
     }
