@@ -569,7 +569,7 @@ Almost everything a fork needs to change is in `Chaos.Client/GlobalSettings.cs`:
 
 | Setting                | What it is                                                                                                                          |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `ClientVersion`        | Version sent to the server on handshake. Default `741`.                                                                             |
+| `ClientVersion`        | Version sent to the server on handshake. Default `742`.                                                                             |
 | `DataPath`             | Absolute path to the Dark Ages data folder (contains the `.dat` archives).                                                          |
 | `LobbyHost`            | Lobby server hostname or IP.                                                                                                        |
 | `LobbyPort`            | Lobby server port.                                                                                                                  |
