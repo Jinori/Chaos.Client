@@ -266,8 +266,19 @@ public sealed class InputDispatcher
                     MouseMove.Target = CapturedElement;
                     CapturedElement.OnMouseMove(MouseMove);
 
-                    //check drag threshold
-                    if (!DragActive)
+                    //check drag threshold — but only while the capturing button is still
+                    //physically held. this block runs at the top of the frame against the
+                    //*frame-end* cursor position (InputBuffer.MouseX/Y), which can include
+                    //movement that happened AFTER the button was already released (e.g. a
+                    //macro's trailing MouseMove, or the next click's reposition) when the
+                    //matching up is still queued for this frame's dispatch. without the
+                    //held-gate that post-release wander is mis-read as a drag, OnDragStart
+                    //fires on the captured slot, DragActive latches true, and the pending
+                    //up then takes the drag-drop branch instead of synthesizing a click —
+                    //silently eating a legitimate click (e.g. a queued spell never casts).
+                    //the watcher flips IsLeftButtonHeld/IsRightButtonHeld synchronously
+                    //during the pump before ProcessInput, so this reflects the up already.
+                    if (!DragActive && IsCapturedButtonHeld())
                     {
                         var dx = mouseX - MouseDownPosition.X;
                         var dy = mouseY - MouseDownPosition.Y;
@@ -432,6 +443,21 @@ public sealed class InputDispatcher
                     break;
                 }
             }
+
+        //stale-capture cleanup. in normal flow a button-up is processed in the same frame
+        //the watcher observed it (IsXxxButtonHeld and the buffered up are produced together),
+        //so capture is already released by the loop above and this is a no-op. but if a
+        //release never reaches us — the window lost focus mid-press (InputBuffer clears the
+        //held flags on the active→inactive edge precisely because SDL stops delivering ups
+        //to a background window) — the capture/drag state would otherwise linger and make
+        //the next interaction's up fire a phantom drag-drop that swallows its click. once
+        //the capturing button is no longer held, that state is definitively stale.
+        if (CapturedElement is not null && !IsCapturedButtonHeld())
+        {
+            CapturedElement = null;
+            DragActive = false;
+            DragPayload = null;
+        }
     }
 
     private void ProcessMouseButton(
@@ -718,6 +744,17 @@ public sealed class InputDispatcher
     }
 
     //── helpers ──
+
+    /// <summary>
+    ///     True while the mouse button that initiated the current capture is still physically
+    ///     down. <see cref="InputBuffer.IsLeftButtonHeld" /> / <see cref="InputBuffer.IsRightButtonHeld" />
+    ///     are flipped synchronously by the SDL watcher during the pump at the top of
+    ///     <see cref="InputBuffer.Update" /> — which runs before <see cref="ProcessInput" /> — so this
+    ///     reflects every button event up to now, including an up that is still queued for this
+    ///     frame's dispatch.
+    /// </summary>
+    private bool IsCapturedButtonHeld()
+        => MouseDownButton == MouseButton.Right ? InputBuffer.IsRightButtonHeld : InputBuffer.IsLeftButtonHeld;
 
     /// <summary>
     ///     True if <paramref name="descendant" /> is a child, grandchild, etc. of <paramref name="ancestor" />.
