@@ -102,7 +102,7 @@ public sealed class MarketSellEditorControl : UIPanel
 
         EmptyHint = new UILabel
         {
-            X = 4, Y = height / 3, Width = width - 8, Height = TextRenderer.CHAR_HEIGHT * 3,
+            X = 4, Y = height / 3, Width = width - 8, Height = TextRenderer.CHAR_HEIGHT * 4,
             //match the Results detail pane's empty-state hint (MarketItemDetailControl.StatLabelColor).
             ForegroundColor = LegendColors.Gray, WordWrap = true,
             Text = "Select a listing to price or delist it.\nDrag items from your inventory to list them."
