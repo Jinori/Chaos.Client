@@ -3,6 +3,7 @@ using Chaos.Client.Collections;
 using Chaos.Client.Controls.Components;
 using Chaos.Client.Data;
 using Chaos.Client.Data.Models;
+using Chaos.Client.Definitions;
 using Chaos.Client.Models;
 using Chaos.DarkAges.Definitions;
 using Microsoft.Xna.Framework;
@@ -15,7 +16,7 @@ namespace Chaos.Client.Controls.World.Popups.Profile;
 ///     Status book container using _nui prefab (main page). Contains tab navigation and hosts sub-pages: Equipment,
 ///     Skills, Legend, Events, Family. Each tab page is a separate prefab that swaps in when the tab is selected.
 /// </summary>
-public sealed class SelfProfileTabControl : PrefabPanel
+public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
 {
     private const int TAB_COUNT = 6;
 
@@ -462,6 +463,9 @@ public sealed class SelfProfileTabControl : PrefabPanel
 
         return equipPage?.ContainsEquipmentSlotPoint(screenX, screenY) ?? false;
     }
+
+    public bool AcceptsInventoryDrop(byte slot, int screenX, int screenY)
+        => (slot != 0) && Visible && ContainsEquipmentSlotPoint(screenX, screenY);
 
     /// <summary>
     ///     Gets the current profile text from the equipment tab's editable text box.

@@ -26,6 +26,13 @@ public class UIPanel : UIElement
     /// </summary>
     public bool UsesControlStack { get; set; }
 
+    /// <summary>
+    ///     When true, this panel (and its descendants) stay mouse-interactive even while a textbox in another
+    ///     control-stack popup holds focus. Set on the persistent HUD drag grids so inventory/skill/spell items can be
+    ///     dragged onto an open popup (Market/Exchange). See <c>InputDispatcher</c>'s mouse-block logic.
+    /// </summary>
+    public bool IgnoresModalMouseBlock { get; set; }
+
     public List<UIElement> Children { get; } = [];
 
     public UIPanel()

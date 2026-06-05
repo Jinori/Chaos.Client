@@ -235,10 +235,27 @@ public sealed class InputDispatcher
 
         if (ExplicitFocusElement is not null)
         {
-            var containingPanel = FindContainingStackEntry(ExplicitFocusElement) ?? ExplicitFocusElement.Parent;
+            //an explicitly-focused element that has gone invisible (e.g. a popup editor body hidden out from under the
+            //focused field) must not gate mouse input — otherwise it silently makes the whole UI mouse-modal with no way
+            //to dismiss it via the mouse. mirror the keyboard path (DispatchKeyboardEvent), which clears focus when it's
+            //no longer visible.
+            if (!IsEffectivelyVisible(ExplicitFocusElement))
+                ClearExplicitFocus();
 
-            if (containingPanel is not null && !containingPanel.ContainsPoint(mouseX, mouseY))
-                mouseBlocked = true;
+            //capture owns the mouse: never block an in-progress gesture (press → drag → release). without this, a drag
+            //from the HUD to a top-anchored popup would freeze the instant the cursor crossed the world viewport, and a
+            //fast drag whose first post-press frame is already over the world would never latch.
+            else if (CapturedElement is null)
+            {
+                var containingPanel = FindContainingStackEntry(ExplicitFocusElement) ?? ExplicitFocusElement.Parent;
+
+                //a focused textbox stays modal over the bare world and other floating popups, but never over the
+                //persistent HUD drag grids — so an inventory drag can START even with a popup field focused.
+                if (containingPanel is not null
+                    && !containingPanel.ContainsPoint(mouseX, mouseY)
+                    && !IsOverModalExemptSurface(root, mouseX, mouseY))
+                    mouseBlocked = true;
+            }
         }
 
         if (!mouseBlocked)
@@ -686,6 +703,20 @@ public sealed class InputDispatcher
         }
 
         return true;
+    }
+
+    /// <summary>
+    ///     True if the cursor is over a panel (or a descendant of one) flagged
+    ///     <see cref="UIPanel.IgnoresModalMouseBlock" /> — the persistent HUD drag grids. Lets a drag start from the
+    ///     inventory even while a popup textbox holds explicit focus.
+    /// </summary>
+    private static bool IsOverModalExemptSurface(UIPanel root, int x, int y)
+    {
+        for (UIElement? current = HitTest(root, x, y); current is not null; current = current.Parent)
+            if (current is UIPanel { IgnoresModalMouseBlock: true })
+                return true;
+
+        return false;
     }
 
     private static void DispatchSingle(UIElement element, InputEvent e)

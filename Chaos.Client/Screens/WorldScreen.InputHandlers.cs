@@ -75,29 +75,15 @@ public sealed partial class WorldScreen
 
     private void HandleInventoryDropInViewport(byte slot, int mouseX, int mouseY)
     {
-        //dropped onto the exchange window — add item to exchange
-        if ((slot != 0) && Exchange.Visible && Exchange.ContainsPoint(mouseX, mouseY))
-        {
-            Game.Connection.SendExchangeInteraction(ExchangeRequestType.AddItem, Exchange.OtherUserId, slot);
+        //registered popup/HUD drop targets get first refusal; each owns its eligibility + drop-zone test, and
+        //WorldScreen owns the paired networking action.
+        foreach (var (target, onDrop) in InventoryDropTargets)
+            if (target.AcceptsInventoryDrop(slot, mouseX, mouseY))
+            {
+                onDrop(slot);
 
-            return;
-        }
-
-        //dropped onto the Market Sell tab's listings — list the item
-        if ((slot != 0) && Market.Visible && Market.IsOnSellTab && Market.SellDropZoneContains(mouseX, mouseY))
-        {
-            BeginMarketListing(slot);
-
-            return;
-        }
-
-        //dropped onto an equipment slot — equip the item
-        if ((slot != 0) && StatusBook.Visible && StatusBook.ContainsEquipmentSlotPoint(mouseX, mouseY))
-        {
-            Game.Connection.UseItem(slot);
-
-            return;
-        }
+                return;
+            }
 
         //block drops that land on any visible popup window
         if (IsOverVisiblePopup(mouseX, mouseY))

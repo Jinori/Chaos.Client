@@ -112,6 +112,11 @@ public abstract class PanelBase : ExpandablePanel
         VisibleSlotCount = normalVisibleSlots;
         SlotOffset = slotOffset;
         Columns = columns;
+
+        //persistent HUD drag grids stay mouse-interactive even when a popup textbox is focused, so items can be
+        //dragged onto Market/Exchange while a field there is focused. See UIPanel.IgnoresModalMouseBlock.
+        IgnoresModalMouseBlock = true;
+
         DrawSlotNumberOverlay = drawSlotNumberOverlay;
 
         if (background is not null)

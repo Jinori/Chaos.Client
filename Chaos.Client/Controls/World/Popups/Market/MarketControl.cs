@@ -2,6 +2,7 @@
 using Chaos.Client.Controls.Components;
 using Chaos.Client.Controls.Custom;
 using Chaos.Client.Controls.World.Popups.Dialog;
+using Chaos.Client.Definitions;
 using Chaos.Client.Extensions;
 using Chaos.Client.Models;
 using Chaos.Networking.Entities.Client;
@@ -25,7 +26,7 @@ namespace Chaos.Client.Controls.World.Popups.Market;
 ///     dimensions. The frame art is drawn programmatically by the base from the
 ///     live Width/Height, so the override yields the exact intended size.
 /// </remarks>
-public sealed class MarketControl : FramedDialogPanelBase
+public sealed class MarketControl : FramedDialogPanelBase, IInventoryDropTarget
 {
     //canonical market panel size (the visual spec).
     private const int PANEL_WIDTH = 560;
@@ -196,6 +197,9 @@ public sealed class MarketControl : FramedDialogPanelBase
 
     /// <summary>True if the point is over the Sell tab's listings drop zone.</summary>
     public bool SellDropZoneContains(int screenX, int screenY) => SellPage?.DropZoneContains(screenX, screenY) ?? false;
+
+    public bool AcceptsInventoryDrop(byte slot, int screenX, int screenY)
+        => (slot != 0) && Visible && IsOnSellTab && SellDropZoneContains(screenX, screenY);
 
     /// <summary>Adds an unpriced draft listing from inventory <paramref name="slot" /> (quantity <paramref name="amount" />).</summary>
     public void AddSellDraft(byte slot, int amount) => SellPage?.AddDraftListing(slot, amount);

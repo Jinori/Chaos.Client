@@ -14,6 +14,7 @@ using Chaos.Client.Controls.World.Popups.Profile;
 using Chaos.Client.Controls.World.Popups.WorldList;
 using Chaos.Client.Controls.World.ViewPort;
 using Chaos.Client.Data.Repositories;
+using Chaos.Client.Definitions;
 using Chaos.Client.Extensions;
 using Chaos.Client.Models;
 using Chaos.Client.Rendering.Models;
@@ -138,6 +139,10 @@ public sealed partial class WorldScreen : IScreen
 
     //temp debug: market window, toggled via F12 until the NPC entry point is wired (Task 2+)
     private MarketControl Market = null!;
+
+    //ordered inventory drop-target registry (Exchange → Market → equipment); each target owns its eligibility/drop-zone,
+    //WorldScreen owns the paired networking action (so all Game.Connection.* calls stay here).
+    private readonly List<(IInventoryDropTarget Target, Action<byte> OnDrop)> InventoryDropTargets = [];
     private OkPopupMessageControl MarketBuyConfirm = null!;
     private MarketSearchCriteria LastMarketCriteria = new();
     private ulong PendingBuyListingId;
@@ -749,6 +754,12 @@ public sealed partial class WorldScreen : IScreen
         Root.AddChild(TownMapControl);
         Root.AddChild(MapLoading);
         Root.AddChild(DisconnectPopup);
+
+        //inventory drop-target registry: each panel owns its eligibility/drop-zone; the paired action owns the networking
+        //call. priority order mirrors the previous if-chain (Exchange → Market → equipment).
+        InventoryDropTargets.Add((Exchange, slot => Game.Connection.SendExchangeInteraction(ExchangeRequestType.AddItem, Exchange.OtherUserId, slot)));
+        InventoryDropTargets.Add((Market, BeginMarketListing));
+        InventoryDropTargets.Add((StatusBook, slot => Game.Connection.UseItem(slot)));
 
         WireHudPanels(SmallHud);
         WireHudPanels(LargeHud);

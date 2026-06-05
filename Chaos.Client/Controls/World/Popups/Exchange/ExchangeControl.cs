@@ -2,6 +2,7 @@
 using Chaos.Client.Collections;
 using Chaos.Client.Controls.Components;
 using Chaos.Client.Controls.Generic;
+using Chaos.Client.Definitions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 #endregion
@@ -12,7 +13,7 @@ namespace Chaos.Client.Controls.World.Popups.Exchange;
 ///     Exchange/trade panel using _nexch prefab. Thin view that subscribes to
 ///     <see cref="Exchange" /> state events. Two-sided layout with up to 4 items per side.
 /// </summary>
-public sealed class ExchangeControl : PrefabPanel
+public sealed class ExchangeControl : PrefabPanel, IInventoryDropTarget
 {
     private const int MAX_VISIBLE_ITEMS = 4;
     private const int ITEM_ROW_HEIGHT = 32;
@@ -45,6 +46,9 @@ public sealed class ExchangeControl : PrefabPanel
     public UIButton? OkButton { get; }
 
     public uint OtherUserId => WorldState.Exchange.OtherUserId;
+
+    public bool AcceptsInventoryDrop(byte slot, int screenX, int screenY)
+        => (slot != 0) && Visible && ContainsPoint(screenX, screenY);
 
     /// <summary>
     ///     The player's own name, used for the left side label. Set from WorldScreen after DisplayAisling.
