@@ -2,3 +2,4 @@
 	path = Chaos-Server
 	url = https://github.com/Jinori/Chaos-Server
 	branch = master
+	update = merge
