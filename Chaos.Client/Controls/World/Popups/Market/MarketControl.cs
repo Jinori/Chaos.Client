@@ -16,7 +16,7 @@ namespace Chaos.Client.Controls.World.Popups.Market;
 /// <summary>
 ///     The market / auction-house window. Reuses the ornate dialog frame (<see cref="FramedDialogPanelBase" />) and
 ///     hosts a 3-tab nav (Search / Results / Sell) over swappable page controls. Mounted on WorldScreen.Root,
-///     toggled via a debug hotkey (F12) for now until the NPC entry point is wired.
+///     opened via the Starbargain NPC (scriptKey MarketStall) or the /market command.
 /// </summary>
 /// <remarks>
 ///     There is no DAT-backed <c>_market</c> control file (prefabs resolve only from the Setoa/Cious archives — see

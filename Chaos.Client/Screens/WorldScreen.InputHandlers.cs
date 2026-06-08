@@ -708,21 +708,6 @@ public sealed partial class WorldScreen
             return;
         }
 
-        //TEMP DEBUG: F12 is a visual-only dev toggle for the market window. Real/data-driven open is via the
-        //Starbargain NPC (scriptKey MarketStall) or the /market command. Must sit above the stack guard — the open
-        //panel pushes the control stack, so the close key would otherwise be suppressed.
-        if (e.Key == Keys.F12)
-        {
-            if (Market.Visible)
-                Market.Hide();
-            else
-                Market.Show();
-
-            e.Handled = true;
-
-            return;
-        }
-
         //stack guard: suppress all game hotkeys when a popup is active
         if (Game.Dispatcher.ControlStackCount > 0)
             return;

@@ -137,7 +137,7 @@ public sealed partial class WorldScreen : IScreen
     private ItemTooltipControl ItemTooltip = null!;
     private LargeWorldHudControl LargeHud = null!;
 
-    //temp debug: market window, toggled via F12 until the NPC entry point is wired (Task 2+)
+    //market window — opened via the Starbargain NPC (scriptKey MarketStall) or the /market command
     private MarketControl Market = null!;
 
     //ordered inventory drop-target registry (Exchange → Market → equipment); each target owns its eligibility/drop-zone,
@@ -699,7 +699,7 @@ public sealed partial class WorldScreen : IScreen
             MarketBuyConfirm.Show(message);
         };
 
-        //if the market closes (F12 / Close / Escape / NPC dismissal) while the confirm is open, dismiss the confirm
+        //if the market closes (Close / Escape / NPC dismissal) while the confirm is open, dismiss the confirm
         //too — it lives on Root, not as a child of Market, so Market.Hide won't cascade to it.
         Market.Closed += () => MarketBuyConfirm.Hide();
 
