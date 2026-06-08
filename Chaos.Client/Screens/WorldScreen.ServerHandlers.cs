@@ -1046,10 +1046,16 @@ public sealed partial class WorldScreen
             //identical, pixel-for-pixel overlapping copy that would waste a slot.
             WorldState.ActiveEffects.RemoveAll(e => (e.TargetEntityId == targetEntityId) && (e.EffectId == effectId));
 
+            var maxPerEntity = ClientSettings.MaxEffectAnimationsPerEntity;
+
+            //a cap of 0 means no effect animations play on entities at all — drop the incoming one.
+            if (maxPerEntity <= 0)
+                return;
+
             //evict the oldest entity-attached effect(s) until there's room for the incoming one.
             //ActiveEffects is append-ordered (completed effects are removed in place), so the
             //lowest matching index is the oldest still-living effect — FIFO eviction.
-            while (WorldState.ActiveEffects.Count(e => e.TargetEntityId == targetEntityId) >= GlobalSettings.MAX_EFFECTS_PER_ENTITY)
+            while (WorldState.ActiveEffects.Count(e => e.TargetEntityId == targetEntityId) >= maxPerEntity)
             {
                 var oldestIndex = WorldState.ActiveEffects.FindIndex(e => e.TargetEntityId == targetEntityId);
 

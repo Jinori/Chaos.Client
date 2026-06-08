@@ -45,6 +45,8 @@ public sealed class SettingsControl : FramedDialogPanelBase
 
     private readonly Dictionary<SettingKey, CustomCheckBox> Checkboxes = [];
     private readonly Dictionary<SettingKey, CustomComboBox> Combos = [];
+    private readonly Dictionary<SettingKey, SliderControl> Sliders = [];
+    private readonly Dictionary<SettingKey, UILabel> SliderReadouts = [];
     private readonly UserOptions Options;
 
     //scrolled surface; its Y is offset negatively to scroll. Rows are children of this.
@@ -241,6 +243,9 @@ public sealed class SettingsControl : FramedDialogPanelBase
     //checkbox — a future slider/dropdown/keybinding becomes a new branch here and nowhere else.
     private (UIPanel cell, int height) BuildSettingCell(SettingDefinition def, int width)
     {
+        if (def.GetSliderValue is not null)
+            return BuildSliderCell(def, width);
+
         if (def.Choices is not null)
             return BuildDropdownCell(def, width);
 
@@ -284,11 +289,21 @@ public sealed class SettingsControl : FramedDialogPanelBase
         combo.SelectionChanged += i => def.SetChoice?.Invoke(i);
         Combos[def.Key] = combo;
 
+        var cell = MakeLabeledCell(def, width, rowH, labelW);
+        cell.AddChild(combo);
+
+        return (cell, rowH);
+    }
+
+    //Creates a pass-through row cell of `height` with the setting's left-aligned label already mounted.
+    //Shared by the dropdown and slider builders; callers mount their widget at labelW + LABEL_GAP.
+    private UIPanel MakeLabeledCell(SettingDefinition def, int width, int height, int labelW)
+    {
         var cell = new UIPanel
         {
             Name = $"cell_{def.Key}",
             Width = width,
-            Height = rowH,
+            Height = height,
             IsPassThrough = true
         };
 
@@ -299,7 +314,7 @@ public sealed class SettingsControl : FramedDialogPanelBase
                 X = 0,
                 Y = 0,
                 Width = labelW,
-                Height = rowH,
+                Height = height,
                 PaddingLeft = 0,
                 PaddingRight = 0,
                 PaddingTop = 0,
@@ -307,9 +322,55 @@ public sealed class SettingsControl : FramedDialogPanelBase
                 Text = def.Label
             });
 
-        cell.AddChild(combo);
+        return cell;
+    }
 
-        return (cell, rowH);
+    //Builds a label + 0–10 slider + live numeric readout for an integer setting. The slider is tracked in
+    //Sliders (its readout in SliderReadouts) so RefreshAll can re-sync from the model on reopen, mirroring Combos.
+    private (UIPanel cell, int height) BuildSliderCell(SettingDefinition def, int width)
+    {
+        const int SLIDER_WIDTH = 90;
+        const int READOUT_WIDTH = 18;
+        const int TRACK_HEIGHT = 6;
+
+        var labelW = TextRenderer.MeasureWidth(def.Label) + 2;
+        var trackX = labelW + LABEL_GAP;
+        var initial = def.GetSliderValue!();
+
+        var cell = MakeLabeledCell(def, width, ROW_HEIGHT, labelW);
+
+        var thumb = UiRenderer.Instance!.GetEpfTexture("option04.epf", 0);
+        var trackRect = new Rectangle(trackX, (ROW_HEIGHT - TRACK_HEIGHT) / 2, SLIDER_WIDTH, TRACK_HEIGHT);
+        var slider = new SliderControl(trackRect, thumb, drawTrack: true) { Name = $"slider_{def.Key}" };
+        slider.SetValue(initial);
+
+        var readout = new UILabel
+        {
+            Name = $"val_{def.Key}",
+            X = trackX + SLIDER_WIDTH + LABEL_GAP + 6,
+            Y = 0,
+            Width = READOUT_WIDTH,
+            Height = ROW_HEIGHT,
+            PaddingLeft = 0,
+            PaddingRight = 0,
+            PaddingTop = 0,
+            ForegroundColor = TextColors.Default,
+            Text = initial.ToString()
+        };
+
+        slider.ValueChanged += v =>
+        {
+            def.SetSliderValue?.Invoke(v);
+            readout.Text = v.ToString();
+        };
+
+        Sliders[def.Key] = slider;
+        SliderReadouts[def.Key] = readout;
+
+        cell.AddChild(slider);
+        cell.AddChild(readout);
+
+        return (cell, ROW_HEIGHT);
     }
 
     private void OnValueChanged(SettingKey key, bool value)
@@ -331,6 +392,15 @@ public sealed class SettingsControl : FramedDialogPanelBase
 
             if (def.GetChoice is not null)
                 combo.SelectedIndex = def.GetChoice();
+        }
+
+        foreach ((var key, var slider) in Sliders)
+        {
+            var value = SettingDefinitions.ByKey(key).GetSliderValue!();
+            slider.SetValue(value);
+
+            if (SliderReadouts.TryGetValue(key, out var readout))
+                readout.Text = value.ToString();
         }
 
         RefreshGatedStates();

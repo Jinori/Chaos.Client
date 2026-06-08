@@ -18,13 +18,13 @@ public static class GlobalSettings
     private static readonly string[] PreLoadedAssemblies = ["Chaos.Networking"];
     private static readonly Type[] PreInitializedStatics = [typeof(DataContext), typeof(MachineIdentity)];
     public static readonly SamplerState Sampler = SamplerState.PointClamp; //SamplerState.LinearClamp;
-    private static ushort ClientVersion => 742;
+    private static ushort ClientVersion => 743;
 
     public static string DataPath
         => Environment.GetEnvironmentVariable("DA_PATH") ??
-            //@"C:\Users\Despe\Desktop\Unora\Unora";
+            @"C:\Users\Despe\Desktop\Unora\Unora";
             //Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-            @"C:\Users\Despe\Desktop\Dark Ages";
+            //@"C:\Users\Despe\Desktop\Dark Ages";
 
     public static string LobbyHost
         => Environment.GetEnvironmentVariable("DA_LOBBY_HOST") ??
@@ -42,12 +42,6 @@ public static class GlobalSettings
     ///     When false (default), any character can swim freely and pathfinding routes through water tiles.
     /// </summary>
     public static bool RequireSwimmingSkill => false;
-
-    /// <summary>
-    ///     Maximum number of effect animations that can play on a single entity at once. When a new effect
-    ///     would exceed this cap, the oldest still-playing effect on that entity is evicted to make room.
-    /// </summary>
-    public const int MAX_EFFECTS_PER_ENTITY = 2;
 
     // --- Floating damage / heal numbers ---
 

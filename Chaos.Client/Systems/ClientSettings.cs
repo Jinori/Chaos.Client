@@ -20,6 +20,9 @@ public static class ClientSettings
     public static int SoundVolume { get; set; } = 5;
     public static bool DoubleTapForAltPanels { get; set; } = true;
 
+    // --- Effect animation cap (client-local; enforced in WorldScreen effect handling) ---
+    public static int MaxEffectAnimationsPerEntity { get; set; } = 2;
+
     // --- Floating damage / heal numbers (client-local; gated in EntityOverlayManager) ---
     public static bool DamageNumbersEnabled { get; set; } = true;
     public static bool ShowDamageNumbersOnAislings { get; set; } = true;
@@ -135,6 +138,12 @@ public static class ClientSettings
                             DamageNumberSize = (DamageNumberSize)dnsz;
 
                         break;
+
+                    case "MaxEffectAnimations":
+                        if (int.TryParse(value, out var mea))
+                            MaxEffectAnimationsPerEntity = Math.Clamp(mea, 0, 10);
+
+                        break;
                 }
             }
         } catch
@@ -166,6 +175,7 @@ public static class ClientSettings
             writer.WriteLine($"ShowDamageNumbersOnNpcs : {(ShowDamageNumbersOnNpcs ? 1 : 0)}");
             writer.WriteLine($"ShowHealNumbersOnNpcs : {(ShowHealNumbersOnNpcs ? 1 : 0)}");
             writer.WriteLine($"DamageNumberSize : {(int)DamageNumberSize}");
+            writer.WriteLine($"MaxEffectAnimations : {MaxEffectAnimationsPerEntity}");
         } catch
         {
             //best effort — don't crash on save failure

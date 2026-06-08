@@ -46,6 +46,7 @@ public enum SettingKey
     HideEnemyHealthBars,
     ShowFriendlyNametags,
     SmoothScrolling,
+    MaxEffectAnimations,
     ListenToHitSounds,
     WhisperSound,
     LockHands,
@@ -84,7 +85,9 @@ public sealed record SettingDefinition(
     IReadOnlyList<string>? Choices = null, //non-null ⇒ rendered as a dropdown instead of a checkbox
     Func<int>? GetChoice = null,           //current selected index (dropdown only)
     Action<int>? SetChoice = null,         //called with the new index on selection (dropdown only)
-    SettingKey? GatedBy = null);           //non-null ⇒ this setting is enabled only while GatedBy's value is true
+    SettingKey? GatedBy = null,            //non-null ⇒ this setting is enabled only while GatedBy's value is true
+    Func<int>? GetSliderValue = null,      //non-null ⇒ rendered as a 0–10 slider instead of a checkbox
+    Action<int>? SetSliderValue = null);   //called with the new value on slider change (slider only)
 
 /// <summary>
 ///     The single ordered source of truth for the F4 settings, replacing the old fixed 20-slot magic-index model.
@@ -114,6 +117,18 @@ public static class SettingDefinitions
             SettingCategory.ClientLocal,
             Get: () => ClientSettings.ScrollLevel > 0,
             Set: v => ClientSettings.ScrollLevel = v ? 1 : 0),
+        new(
+            SettingKey.MaxEffectAnimations,
+            "Max animations per entity",
+            SettingSection.Display,
+            SettingCategory.ClientLocal,
+            Span: SettingSpan.Full,
+            GetSliderValue: () => ClientSettings.MaxEffectAnimationsPerEntity,
+            SetSliderValue: v =>
+            {
+                ClientSettings.MaxEffectAnimationsPerEntity = v;
+                ClientSettings.Save();
+            }),
 
         //── Damage Numbers ──
         new(

@@ -19,6 +19,7 @@ public sealed class SliderControl : UIPanel
     private readonly Texture2D? ThumbTexture;
     private readonly int ThumbWidth;
     private readonly int ThumbHeight;
+    private readonly bool DrawTrack;
     private bool Dragging;
 
     /// <summary>
@@ -36,10 +37,12 @@ public sealed class SliderControl : UIPanel
     /// </summary>
     /// <param name="trackRect">Track bounds relative to the parent panel (from prefab rect).</param>
     /// <param name="thumbTexture">Thumb/tick texture.</param>
-    public SliderControl(Rectangle trackRect, Texture2D? thumbTexture)
+    /// <param name="drawTrack">When true, draws a 1px black track line (for hosts without a painted groove, e.g. the F4 panel).</param>
+    public SliderControl(Rectangle trackRect, Texture2D? thumbTexture, bool drawTrack = false)
     {
         TrackRect = trackRect;
         ThumbTexture = thumbTexture;
+        DrawTrack = drawTrack;
         ThumbWidth = thumbTexture?.Width ?? 12;
         ThumbHeight = thumbTexture?.Height ?? 12;
 
@@ -60,6 +63,10 @@ public sealed class SliderControl : UIPanel
             return;
 
         base.Draw(spriteBatch);
+
+        //black track line for hosts without a painted groove; drawn under the thumb.
+        if (DrawTrack)
+            RenderHelper.DrawRect(spriteBatch, new Rectangle(ScreenX + ThumbWidth / 2, ScreenY + Height / 2, TrackRect.Width, 1), Color.Black);
 
         var thumbX = ScreenX + ThumbWidth / 2 + (int)((float)Value / VOLUME_MAX * TrackRect.Width) - ThumbWidth / 2;
         var thumbY = ScreenY + (Height - ThumbHeight) / 2;
