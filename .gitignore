@@ -401,6 +401,8 @@ FodyWeavers.xsd
 # ai stuff
 .ai
 .claude
+graphify-out
+.graphify
 .scratch
 .serena
 CLAUDE.local.md

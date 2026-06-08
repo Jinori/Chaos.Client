@@ -1,5 +1,6 @@
 #region
 using Chaos.Client.Controls.Components;
+using Chaos.Client.Controls.Custom;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 #endregion
@@ -37,7 +38,7 @@ public sealed class SliderControl : UIPanel
     /// </summary>
     /// <param name="trackRect">Track bounds relative to the parent panel (from prefab rect).</param>
     /// <param name="thumbTexture">Thumb/tick texture.</param>
-    /// <param name="drawTrack">When true, draws a 1px black track line (for hosts without a painted groove, e.g. the F4 panel).</param>
+    /// <param name="drawTrack">When true, draws a dlgframe top-edge track (for hosts without a painted groove, e.g. the F4 panel).</param>
     public SliderControl(Rectangle trackRect, Texture2D? thumbTexture, bool drawTrack = false)
     {
         TrackRect = trackRect;
@@ -53,6 +54,18 @@ public sealed class SliderControl : UIPanel
         Y = trackRect.Y - overflowY;
         Width = trackRect.Width + ThumbWidth;
         Height = Math.Max(trackRect.Height, ThumbHeight);
+
+        //track shares the dlgframe top-edge art with the other custom controls; centered vertically
+        //under the thumb. only built for hosts without their own painted groove.
+        if (DrawTrack)
+        {
+            var track = new CustomSeparator(SeparatorOrientation.Horizontal, trackRect.Width)
+            {
+                X = ThumbWidth / 2
+            };
+            track.Y = (Height - track.Height) / 2;
+            AddChild(track);
+        }
     }
 
     public void SetValue(int value) => Value = Math.Clamp(value, VOLUME_MIN, VOLUME_MAX);
@@ -62,11 +75,7 @@ public sealed class SliderControl : UIPanel
         if (!Visible || ThumbTexture is null)
             return;
 
-        base.Draw(spriteBatch);
-
-        //black track line for hosts without a painted groove; drawn under the thumb.
-        if (DrawTrack)
-            RenderHelper.DrawRect(spriteBatch, new Rectangle(ScreenX + ThumbWidth / 2, ScreenY + Height / 2, TrackRect.Width, 1), Color.Black);
+        base.Draw(spriteBatch); //draws the track separator child (when present), under the thumb
 
         var thumbX = ScreenX + ThumbWidth / 2 + (int)((float)Value / VOLUME_MAX * TrackRect.Width) - ThumbWidth / 2;
         var thumbY = ScreenY + (Height - ThumbHeight) / 2;

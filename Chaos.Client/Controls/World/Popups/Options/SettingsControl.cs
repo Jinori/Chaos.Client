@@ -331,7 +331,7 @@ public sealed class SettingsControl : FramedDialogPanelBase
     {
         const int SLIDER_WIDTH = 90;
         const int READOUT_WIDTH = 18;
-        const int TRACK_HEIGHT = 6;
+        const int TRACK_HEIGHT = 4;
 
         var labelW = TextRenderer.MeasureWidth(def.Label) + 2;
         var trackX = labelW + LABEL_GAP;
