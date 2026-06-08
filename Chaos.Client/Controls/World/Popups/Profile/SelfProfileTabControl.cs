@@ -160,6 +160,7 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
             equipTab.OnUnequip += slot => OnUnequip?.Invoke(slot);
             equipTab.OnGroupToggled += () => OnGroupToggled?.Invoke();
             equipTab.OnProfileTextClicked += () => OnProfileTextClicked?.Invoke();
+            equipTab.OnToggleHidden += (option, hidden) => OnToggleHidden?.Invoke(option, hidden);
         }
 
         if (page is SelfProfileAbilityMetadataTab skillsTab)
@@ -202,7 +203,24 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
     public event EventMetadataClickedHandler? OnEventDetailRequested;
     public event GroupToggledHandler? OnGroupToggled;
     public event ProfileTextClickedHandler? OnProfileTextClicked;
+
+    /// <summary>
+    ///     Raised when the user toggles an equipment slot's in-world visibility on the Equipment tab. Carries the server
+    ///     <see cref="UserOption" /> and the new hidden state for the screen to forward to the server.
+    /// </summary>
+    public event Action<UserOption, bool>? OnToggleHidden;
+
     public event UnequipHandler? OnUnequip;
+
+    /// <summary>
+    ///     Pushes the server's hidden-equipment flags (echoed in SelfProfile) onto the Equipment tab's visibility dots.
+    /// </summary>
+    public void ApplyHiddenEquipmentFlags(ushort flags)
+    {
+        var equipPage = GetOrCreateEquipmentPage();
+
+        equipPage?.ApplyHiddenFlags(flags);
+    }
 
     #region Legend API
     /// <summary>

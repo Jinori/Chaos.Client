@@ -737,6 +737,9 @@ public sealed partial class WorldScreen
             args.GuildRank ?? string.Empty,
             args.Title ?? string.Empty);
 
+        //equipment visibility dots — echo the server's authoritative hidden-slot flags onto the dots
+        StatusBook.ApplyHiddenEquipmentFlags(args.HiddenEquipmentFlags);
+
         //legend marks
         var marks = args.LegendMarks
                         .Select(m => new LegendMarkEntry(

@@ -15,6 +15,25 @@ namespace Chaos.Client.Controls.World.Popups.Profile;
 /// </summary>
 public sealed class SelfProfileEquipmentTab : PrefabPanel
 {
+    /// <summary>
+    ///     The 10 hideable equipment slots, in <see cref="SelfProfileArgs.HiddenEquipmentFlags" /> bit order: each row pairs a
+    ///     display <see cref="EquipmentSlot" /> with the server <see cref="UserOption" /> that toggles it and the flag bit
+    ///     index. Over-helm/over-coat toggle independently of helmet/armor.
+    /// </summary>
+    private static readonly (EquipmentSlot Slot, UserOption Option, int Bit)[] HideableSlots =
+    [
+        (EquipmentSlot.Helmet, UserOption.HideHelmet, 0),
+        (EquipmentSlot.OverHelm, UserOption.HideOverHelm, 1),
+        (EquipmentSlot.Armor, UserOption.HideArmor, 2),
+        (EquipmentSlot.Overcoat, UserOption.HideOverCoat, 3),
+        (EquipmentSlot.Weapon, UserOption.HideWeapon, 4),
+        (EquipmentSlot.Shield, UserOption.HideShield, 5),
+        (EquipmentSlot.Boots, UserOption.HideBoots, 6),
+        (EquipmentSlot.Accessory1, UserOption.HideAccessory1, 7),
+        (EquipmentSlot.Accessory2, UserOption.HideAccessory2, 8),
+        (EquipmentSlot.Accessory3, UserOption.HideAccessory3, 9)
+    ];
+
     //emoticon status icon frame index → _nemots.spf frame
     private const int EMOTICON_FRAME_COUNT = 8;
 
@@ -54,6 +73,9 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
     //equipment slot rendering: maps equipmentslot to its visual state
     private readonly Dictionary<EquipmentSlot, EquipmentSlotVisual> SlotVisuals = [];
 
+    //per-hideable-slot visibility toggle dots, drawn over the slot image bottom-right corner
+    private readonly Dictionary<EquipmentSlot, EquipmentVisibilityDot> VisibilityDots = [];
+
     //stat labels from the _nui_eq prefab (n_ prefix)
     private readonly UILabel? StrLabel;
     private readonly UILabel? TitleLabel;
@@ -91,6 +113,31 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
             };
 
             SlotVisuals[slot] = visual;
+        }
+
+        //visibility toggle dots — one per hideable slot, anchored to the slot image's bottom-right
+        //corner. higher zindex than the slot image so the dispatcher routes clicks to the dot first
+        //(clicking the dot toggles visibility; clicking elsewhere on the slot still unequips).
+        foreach ((var slot, var option, _) in HideableSlots)
+        {
+            if (!SlotVisuals.TryGetValue(slot, out var visual))
+                continue;
+
+            var slotImage = visual.Image;
+
+            var dot = new EquipmentVisibilityDot(slot)
+            {
+                //bottom-right inset within the 32px slot cell (nudged 1px down-right)
+                X = slotImage.X + slotImage.Width - 9,
+                Y = slotImage.Y + slotImage.Height - 9,
+                //always shown — a slot's gear can be hidden whether or not it currently holds an item
+                Visible = true
+            };
+
+            //capture this slot's server option directly, so no slot→option lookup is needed on click
+            dot.Toggled += (_, hidden) => OnToggleHidden?.Invoke(option, hidden);
+            VisibilityDots[slot] = dot;
+            AddChild(dot);
         }
 
         //stat labels — right-aligned numeric values
@@ -288,7 +335,25 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
 
     public event GroupToggledHandler? OnGroupToggled;
     public event ProfileTextClickedHandler? OnProfileTextClicked;
+
+    /// <summary>
+    ///     Raised when the user clicks a visibility dot. Carries the server <see cref="UserOption" /> for the slot and the new
+    ///     hidden state. Consumers send this to the server as an <c>OptionToggle</c> Set.
+    /// </summary>
+    public event Action<UserOption, bool>? OnToggleHidden;
+
     public event UnequipHandler? OnUnequip;
+
+    /// <summary>
+    ///     Applies the server's hidden-equipment flags (echoed in SelfProfile) to the dots so each reflects the authoritative
+    ///     shown/hidden state when the profile opens.
+    /// </summary>
+    public void ApplyHiddenFlags(ushort flags)
+    {
+        foreach ((var slot, _, var bit) in HideableSlots)
+            if (VisibilityDots.TryGetValue(slot, out var dot))
+                dot.Hidden = (flags & (1 << bit)) != 0;
+    }
 
     /// <summary>
     ///     Renders an item icon from the panel item sprite sheet using the same pipeline as inventory icons.
@@ -453,6 +518,8 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
         if (e.Button != MouseButton.Left)
             return;
 
+        //note: clicking a visibility dot is handled by the dot itself (higher ZIndex child, sets
+        //e.Handled), so the dispatcher never bubbles that click here — no dot guard needed.
         foreach ((var slot, var visual) in SlotVisuals)
             if (visual.Image.ContainsPoint(e.ScreenX, e.ScreenY) && visual.ItemTexture is not null)
             {

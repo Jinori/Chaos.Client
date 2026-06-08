@@ -558,6 +558,7 @@ public sealed partial class WorldScreen : IScreen
         };
 
         StatusBook.OnUnequip += slot => Game.Connection.Unequip(slot);
+        StatusBook.OnToggleHidden += (option, hidden) => Game.Connection.SendSetUserOption(option, hidden);
         StatusBook.OnClose += SavePlayerFamilyList;
 
         StatusBook.OnGroupToggled += () => Game.Connection.ToggleGroup();
