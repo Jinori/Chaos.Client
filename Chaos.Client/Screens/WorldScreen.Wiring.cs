@@ -983,7 +983,7 @@ public sealed partial class WorldScreen
         MailList.SetViewportBounds(viewport);
         MailRead.SetViewportBounds(viewport);
         MailSend.SetViewportBounds(viewport);
-        ArenaVote.SetViewportBounds(viewport);
+        VotePanel.SetViewportBounds(viewport);
 
         FollowPlayerCamera();
 

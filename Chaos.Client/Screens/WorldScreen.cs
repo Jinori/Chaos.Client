@@ -88,7 +88,7 @@ public sealed partial class WorldScreen : IScreen
 
     private AbilityMetadataDetailsControl AbilityMetadataDetails = null!;
     private AislingContextMenu AislingContext = null!;
-    private ArenaVotePanel ArenaVote = null!;
+    private PollPanel VotePanel = null!;
 
     private int AnimationTick;
     private ArticleListControl ArticleList = null!;
@@ -645,7 +645,7 @@ public sealed partial class WorldScreen : IScreen
         };
         MapLoading.CenterIn(viewport);
 
-        ArenaVote = new ArenaVotePanel(viewport)
+        VotePanel = new PollPanel(viewport)
         {
             ZIndex = 9
         };
@@ -769,8 +769,8 @@ public sealed partial class WorldScreen : IScreen
         Root.AddChild(MapLoading);
         Root.AddChild(DisconnectPopup);
 
-        Root.AddChild(ArenaVote);
-        ArenaVote.VoteCast += (pollId, index) => Game.Connection.SendArenaVote(pollId, index);
+        Root.AddChild(VotePanel);
+        VotePanel.VoteCast += (pollId, index) => Game.Connection.SendVote(pollId, index);
 
         //inventory drop-target registry: each panel owns its eligibility/drop-zone; the paired action owns the networking
         //call. priority order mirrors the previous if-chain (Exchange → Market → equipment).

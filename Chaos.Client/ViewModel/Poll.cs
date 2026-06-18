@@ -1,18 +1,19 @@
 #region
-using Chaos.Client.Networking.Arena;
+using Chaos.Networking.Entities.Server;
 #endregion
 
 namespace Chaos.Client.ViewModel;
 
-public sealed class ArenaPoll
+public sealed class Poll
 {
-    //the server only broadcasts to players on an arena map (~1/sec). If updates stop arriving
-    //(the player left the arena map), hide the panel after this grace window.
+    //the server only broadcasts to the poll's audience (~1/sec). If updates stop arriving
+    //(the player left the audience set, e.g. the arena map), hide the panel after this grace window.
     private const double STALE_SECONDS = 2.5;
 
-    public readonly record struct Option(byte MatchType, string Name, int Votes);
+    public readonly record struct Option(byte Index, string Text, int Votes);
 
     public byte PollId { get; private set; }
+    public string Title { get; private set; } = string.Empty;
     public bool IsOpen { get; private set; }
     public bool IsClosed { get; private set; }
     public int SecondsRemaining { get; private set; }
@@ -22,12 +23,12 @@ public sealed class ArenaPoll
 
     private double SecondsSinceUpdate = double.MaxValue;
 
-    //shown only while the poll is open AND the server is still sending us updates (i.e. we're on
-    //an arena map). Closes immediately on a Closed snapshot, or after the staleness window if we
-    //leave the arena map and updates stop.
+    //shown only while the poll is open AND the server is still sending us updates (i.e. we're in
+    //the audience). Closes immediately on a Closed snapshot, or after the staleness window if we
+    //leave the audience and updates stop.
     public bool ShouldShow => IsOpen && (SecondsSinceUpdate < STALE_SECONDS);
 
-    public void Apply(ArenaPollArgs args)
+    public void Apply(PollArgs args)
     {
         if (args.PollId != PollId)
         {
@@ -35,12 +36,14 @@ public sealed class ArenaPoll
             MyVoteIndex = -1; //new poll: clear local selection
         }
 
+        Title = args.Title;
+
         Options = args.Options
-                      .Select(o => new Option(o.MatchType, o.Name, o.Votes))
+                      .Select(o => new Option(o.Index, o.Text, o.Votes))
                       .ToList();
         SecondsRemaining = args.SecondsRemaining;
 
-        var nowClosed = args.State == ArenaPollState.Closed;
+        var nowClosed = args.State == PollState.Closed;
         IsClosed = nowClosed;
         IsOpen = !nowClosed;
         WinningIndex = nowClosed ? args.WinningIndex : -1;

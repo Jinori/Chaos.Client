@@ -669,9 +669,9 @@ public sealed class ConnectionManager : IDisposable
     //--- arena ---
 
     /// <summary>
-    ///     Fired when an arena match-voting poll packet is received.
+    ///     Fired when a poll packet is received.
     /// </summary>
-    public event Action<Networking.Arena.ArenaPollArgs>? OnArenaPoll;
+    public event Action<PollArgs>? OnPoll;
 
     /// <summary>
     ///     Sends a pickup request from a tile.
@@ -811,12 +811,12 @@ public sealed class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    ///     Sends an arena poll vote to the server.
+    ///     Sends a poll vote to the server.
     /// </summary>
     /// <param name="pollId">The poll ID being voted on.</param>
     /// <param name="optionIndex">The zero-based index of the chosen option.</param>
-    public void SendArenaVote(byte pollId, byte optionIndex)
-        => SendIfWorld(new Networking.Arena.ArenaVoteArgs { PollId = pollId, OptionIndex = optionIndex });
+    public void SendVote(byte pollId, byte optionIndex)
+        => SendIfWorld(new VoteArgs { PollId = pollId, OptionIndex = optionIndex });
 
     /// <summary>
     ///     Adds a player to the ignore list.
@@ -1442,8 +1442,8 @@ public sealed class ConnectionManager : IDisposable
         PacketHandlers[(byte)ServerOpCode.CancelCasting] = HandleCancelCasting;
         PacketHandlers[(byte)ServerOpCode.MetaData] = HandleMetaData;
 
-        //arena
-        PacketHandlers[Networking.Arena.ArenaOpCodes.ArenaPoll] = HandleArenaPoll;
+        //poll
+        PacketHandlers[(byte)ServerOpCode.Poll] = HandlePoll;
     }
 
     private void HandlePacket(ServerPacket pkt)
@@ -1968,12 +1968,12 @@ public sealed class ConnectionManager : IDisposable
         OnMetaData?.Invoke(args);
     }
 
-    //--- arena ---
+    //--- poll ---
 
-    private void HandleArenaPoll(ServerPacket pkt)
+    private void HandlePoll(ServerPacket pkt)
     {
-        var args = Client.Deserialize<Networking.Arena.ArenaPollArgs>(in pkt);
-        OnArenaPoll?.Invoke(args);
+        var args = Client.Deserialize<PollArgs>(in pkt);
+        OnPoll?.Invoke(args);
     }
 
     private void HandleDisconnected()

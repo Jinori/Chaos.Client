@@ -62,9 +62,9 @@ public static class WorldState
     public static PlayerAttributes Attributes { get; } = new();
 
     /// <summary>
-    ///     Authoritative arena match-voting poll state.
+    ///     Authoritative poll/voting state.
     /// </summary>
-    public static ArenaPoll ArenaPoll { get; } = new();
+    public static Poll Poll { get; } = new();
 
     /// <summary>
     ///     Authoritative bulletin board / mail state.
@@ -821,8 +821,8 @@ public static class WorldState
             WorldList.Update(entries, args.WorldMemberCount);
         };
 
-        //arena poll
-        connection.OnArenaPoll += args => ArenaPoll.Apply(args);
+        //poll
+        connection.OnPoll += args => Poll.Apply(args);
     }
 
     /// <summary>

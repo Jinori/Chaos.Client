@@ -8,12 +8,12 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Chaos.Client.Controls.World.ViewPort;
 
 /// <summary>
-///     Top-right wooden voting panel. Renders WorldState.ArenaPoll: title, countdown, one row per candidate (name + vote
+///     Top-right wooden voting panel. Renders WorldState.Poll: title, countdown, one row per option (text + vote
 ///     count + flat tally bar), with the local player's pick highlighted. Clicking a row while the poll is open raises
 ///     <see cref="VoteCast" /> (pollId, optionIndex); the packet send is wired by the owning screen. The ornate 9-slice
 ///     wooden frame is drawn inline, mirroring FramedDialogPanelBase (DlgBack2.spf tiled fill + nd_f01–f08 border pieces).
 /// </summary>
-public sealed class ArenaVotePanel : UIPanel
+public sealed class PollPanel : UIPanel
 {
     private const int PANEL_WIDTH = 178;
     private const int PAD = 12;
@@ -59,13 +59,13 @@ public sealed class ArenaVotePanel : UIPanel
 
     public event Action<byte, byte>? VoteCast;
 
-    public ArenaVotePanel(Rectangle viewportBounds)
+    public PollPanel(Rectangle viewportBounds)
     {
-        Name = "ArenaVotePanel";
+        Name = "PollPanel";
         ViewportBounds = viewportBounds;
         Width = PANEL_WIDTH;
         //stay Visible=true so the parent UIPanel keeps invoking Update/Draw (it skips hidden
-        //children). Rendering + hit-testing are gated on WorldState.ArenaPoll.ShouldShow instead.
+        //children). Rendering + hit-testing are gated on WorldState.Poll.ShouldShow instead.
         IsHitTestVisible = false;
         Visible = true;
     }
@@ -74,7 +74,7 @@ public sealed class ArenaVotePanel : UIPanel
 
     public override void Update(GameTime gameTime)
     {
-        var poll = WorldState.ArenaPoll;
+        var poll = WorldState.Poll;
         poll.Tick(gameTime.ElapsedGameTime.TotalSeconds); //advance staleness timer (hides if updates stop)
 
         if (!poll.ShouldShow)
@@ -94,7 +94,7 @@ public sealed class ArenaVotePanel : UIPanel
 
     public override void OnClick(ClickEvent e)
     {
-        var poll = WorldState.ArenaPoll;
+        var poll = WorldState.Poll;
 
         if (!poll.IsOpen)
             return;
@@ -121,7 +121,7 @@ public sealed class ArenaVotePanel : UIPanel
 
     public override void Draw(SpriteBatch spriteBatch)
     {
-        if (!WorldState.ArenaPoll.ShouldShow)
+        if (!WorldState.Poll.ShouldShow)
             return;
 
         UpdateClipRect();
@@ -131,7 +131,7 @@ public sealed class ArenaVotePanel : UIPanel
 
         EnsureFrameTextures();
 
-        var poll = WorldState.ArenaPoll;
+        var poll = WorldState.Poll;
         var sx = ScreenX;
         var sy = ScreenY;
         var w = Width;
@@ -140,12 +140,12 @@ public sealed class ArenaVotePanel : UIPanel
         DrawFrame(spriteBatch, sx, sy, w, h);
 
         //── title (centered, gold, shadowed) ──
-        const string TITLE = "Arena Vote";
-        var titleX = sx + ((w - TextRenderer.MeasureWidth(TITLE)) / 2);
+        var title = poll.Title;
+        var titleX = sx + ((w - TextRenderer.MeasureWidth(title)) / 2);
         TextRenderer.DrawShadowedText(
             spriteBatch,
             new Vector2(titleX, sy + TITLE_Y),
-            TITLE,
+            title,
             Gold,
             Shadow);
 
@@ -221,7 +221,7 @@ public sealed class ArenaVotePanel : UIPanel
             TextRenderer.DrawShadowedText(
                 spriteBatch,
                 new Vector2(sx + PAD + 7, rowY),
-                o.Name,
+                o.Text,
                 nameColor,
                 Shadow);
 
