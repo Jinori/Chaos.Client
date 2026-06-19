@@ -831,7 +831,7 @@ public sealed class ConnectionManager : IDisposable
     /// <summary>
     ///     Tells the server which owned title to make active.
     /// </summary>
-    public void SendTitleSelect(string title) => SendIfWorld(new Networking.Titles.TitleSelectArgs { Title = title });
+    public void SendTitleSelect(byte index) => SendIfWorld(new Networking.Titles.TitleSelectArgs { Index = index });
 
     /// <summary>
     ///     Adds a player to the ignore list.

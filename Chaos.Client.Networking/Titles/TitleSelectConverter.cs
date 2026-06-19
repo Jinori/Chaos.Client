@@ -10,8 +10,8 @@ public sealed class TitleSelectConverter : PacketConverterBase<TitleSelectArgs>
     public override TitleSelectArgs Deserialize(ref SpanReader reader)
         => new()
         {
-            Title = reader.ReadString8()
+            Index = reader.ReadByte()
         };
 
-    public override void Serialize(ref SpanWriter writer, TitleSelectArgs args) => writer.WriteString8(args.Title);
+    public override void Serialize(ref SpanWriter writer, TitleSelectArgs args) => writer.WriteByte(args.Index);
 }

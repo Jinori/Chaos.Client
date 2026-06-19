@@ -4,5 +4,5 @@ namespace Chaos.Client.Networking.Titles;
 
 public sealed record TitleSelectArgs : IPacketSerializable
 {
-    public string Title { get; set; } = string.Empty;
+    public byte Index { get; set; } = 0;
 }

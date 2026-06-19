@@ -1,5 +1,6 @@
 #region
 using Chaos.Client.Controls.Components;
+using Chaos.Client.Controls.Custom;
 using Chaos.Client.Data;
 using Chaos.DarkAges.Definitions;
 using Microsoft.Xna.Framework;
@@ -83,7 +84,8 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
     //tooltip for hovered equipment slot
     private readonly UILabel TooltipLabel;
     private readonly UILabel? WisLabel;
-    private readonly TitleDropdownControl TitleDropdown;
+    private UIButton? DropBtn;
+    private CustomComboBox? TitleCombo;
     private bool HasTitles;
     private Texture2D? NationIconTexture;
     private Texture2D? PaperdollTexture;
@@ -266,14 +268,35 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
 
         AddChild(TooltipLabel);
 
-        //title selection dropdown — child of this tab, hidden until the title field is clicked
-        TitleDropdown = new TitleDropdownControl();
-        AddChild(TitleDropdown);
-
-        TitleDropdown.TitleSelected += title =>
+        //title dropdown button — _nui_b1.spf 2-frame 18x18 button, shown only when the player has titles.
+        //positioned just to the right of the title label. the combo (TitleCombo) is the invisible
+        //list controller; clicking the button opens the combo's list.
+        if (TitleLabel is not null)
         {
-            OnTitleSelected?.Invoke(title);
-            TitleDropdown.Visible = false;
+            var dropBtn = new UIButton
+            {
+                Name = "TitleDropBtn",
+                Width = 18,
+                Height = 18,
+                NormalTexture = UiRenderer.Instance!.GetSpfTexture("_nui_b1.spf", 0),
+                PressedTexture = UiRenderer.Instance!.GetSpfTexture("_nui_b1.spf", 1),
+                X = TitleLabel.X + TitleLabel.Width,
+                Y = TitleLabel.Y - 3,
+                Visible = false
+            };
+
+            dropBtn.Clicked += () => TitleCombo?.Show();
+            AddChild(dropBtn);
+
+            //store ref so SetTitles can show/hide the button
+            DropBtn = dropBtn;
+        }
+
+        //close the combo list when this tab is hidden so it doesn't linger on the root overlay
+        VisibilityChanged += visible =>
+        {
+            if (!visible)
+                TitleCombo?.Close();
         };
     }
 
@@ -355,7 +378,7 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
     public event Action<UserOption, bool>? OnToggleHidden;
 
     public event UnequipHandler? OnUnequip;
-    public event Action<string>? OnTitleSelected;
+    public event Action<int>? OnTitleSelected;
     public event Action? OnTitleListRequested;
 
     /// <summary>
@@ -456,31 +479,52 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
     }
 
     /// <summary>
-    ///     Populates the title dropdown with the player's titles and active title, and positions it just
-    ///     beneath the title field. Enables the title-field affordance only when the player owns titles.
+    ///     Populates the title combo list with the player's titles and selects the active index.
+    ///     Server order is preserved (no sorting) so the index matches the wire contract.
+    ///     Shows/hides the <c>_nui_b1</c> dropdown button based on whether titles exist.
     /// </summary>
-    public void SetTitles(string activeTitle, IEnumerable<string> titles)
+    public void SetTitles(int activeIndex, IEnumerable<string> titles)
     {
-        var list = titles.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+        var list = titles.ToList();
         HasTitles = list.Count > 0;
 
-        TitleDropdown.SetTitles(activeTitle, list);
-
-        if (TitleLabel is not null)
+        //dispose previous combo (Children.Remove avoids the double-dispose that RemoveChild(string) triggers)
+        if (TitleCombo is not null)
         {
-            TitleDropdown.X = TitleLabel.X;
-            TitleDropdown.Y = TitleLabel.Y + TextRenderer.CHAR_HEIGHT + 2;
-            TitleDropdown.Width = TitleLabel.Width;
+            TitleCombo.Close();
+            Children.Remove(TitleCombo);
+            TitleCombo.Dispose();
+            TitleCombo = null;
         }
 
-        if (!HasTitles)
-            TitleDropdown.Visible = false;
-    }
+        if (HasTitles)
+        {
+            //match the dropdown to the TITLETEXT field: same width, and drop the list flush beneath it
+            var comboWidth = TitleLabel is not null ? TitleLabel.Width + 4 : CustomComboBox.MeasureRequiredWidth(list);
 
-    private void CloseTitleDropdown()
-    {
-        if (TitleDropdown.Visible)
-            TitleDropdown.Visible = false;
+            TitleCombo = new CustomComboBox(comboWidth)
+            {
+                Visible = false,
+                IsHitTestVisible = false
+            };
+
+            if (TitleLabel is not null)
+            {
+                TitleCombo.X = TitleLabel.X - 4;           //cover the field box's left border
+                TitleCombo.Y = TitleLabel.Y;
+                TitleCombo.Height = TitleLabel.Height + 3; //drop the list a few px below the field
+            }
+
+            AddChild(TitleCombo);
+            TitleCombo.SetItems(list, Math.Clamp(activeIndex, 0, Math.Max(0, list.Count - 1)));
+            TitleCombo.SelectionChanged += idx => OnTitleSelected?.Invoke(idx);
+        }
+
+        if (DropBtn is not null)
+            DropBtn.Visible = HasTitles;
+
+        if (!HasTitles)
+            TitleCombo?.Close();
     }
 
     /// <summary>
@@ -560,34 +604,11 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
         if (e.Button != MouseButton.Left)
             return;
 
-        //title field OR the prefab dropdown-arrow box (drawn into the _nui_eq background art, just right
-        //of the title field) → toggle the dropdown, only when the player owns titles
-        if ((TitleLabel is not null) && HasTitles)
-        {
-            var arrowBox = new Rectangle(TitleLabel.ScreenX + TitleLabel.Width, TitleLabel.ScreenY - 2, 24, 16);
-
-            if (TitleLabel.ContainsPoint(e.ScreenX, e.ScreenY) || arrowBox.Contains(e.ScreenX, e.ScreenY))
-            {
-                if (TitleDropdown.Visible)
-                    TitleDropdown.Visible = false;
-                else
-                {
-                    TitleDropdown.Visible = true;
-                    OnTitleListRequested?.Invoke();
-                }
-
-                e.Handled = true;
-
-                return;
-            }
-        }
-
         //note: clicking a visibility dot is handled by the dot itself (higher ZIndex child, sets
         //e.Handled), so the dispatcher never bubbles that click here — no dot guard needed.
         foreach ((var slot, var visual) in SlotVisuals)
             if (visual.Image.ContainsPoint(e.ScreenX, e.ScreenY) && visual.ItemTexture is not null)
             {
-                CloseTitleDropdown();
                 OnUnequip?.Invoke(slot);
                 e.Handled = true;
 
@@ -597,15 +618,9 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
         //check if portrait text area was clicked
         if (PortraitTextLabel is not null && PortraitTextLabel.ContainsPoint(e.ScreenX, e.ScreenY))
         {
-            CloseTitleDropdown();
             OnProfileTextClicked?.Invoke();
             e.Handled = true;
-
-            return;
         }
-
-        //any other click inside the tab closes an open dropdown
-        CloseTitleDropdown();
     }
 
     private sealed class EquipmentSlotVisual

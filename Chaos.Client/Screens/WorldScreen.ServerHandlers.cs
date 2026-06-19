@@ -868,7 +868,7 @@ public sealed partial class WorldScreen
         StatusBook.Show();
     }
 
-    private void HandleTitleList(Chaos.Client.Networking.Titles.TitleListArgs args) => StatusBook.SetTitles(args.ActiveTitle, args.Titles);
+    private void HandleTitleList(Chaos.Client.Networking.Titles.TitleListArgs args) => StatusBook.SetTitles(args.ActiveIndex, args.Titles);
 
     private void HandleOtherProfile(OtherProfileArgs args)
     {

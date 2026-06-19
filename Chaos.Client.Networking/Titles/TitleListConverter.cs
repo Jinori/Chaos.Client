@@ -9,7 +9,7 @@ public sealed class TitleListConverter : PacketConverterBase<TitleListArgs>
 
     public override TitleListArgs Deserialize(ref SpanReader reader)
     {
-        var active = reader.ReadString8();
+        var activeIndex = reader.ReadByte();
         var count = reader.ReadByte();
         var titles = new List<string>(count);
 
@@ -18,14 +18,14 @@ public sealed class TitleListConverter : PacketConverterBase<TitleListArgs>
 
         return new TitleListArgs
         {
-            ActiveTitle = active,
+            ActiveIndex = activeIndex,
             Titles = titles
         };
     }
 
     public override void Serialize(ref SpanWriter writer, TitleListArgs args)
     {
-        writer.WriteString8(args.ActiveTitle);
+        writer.WriteByte(args.ActiveIndex);
         writer.WriteByte((byte)args.Titles.Count);
 
         foreach (var title in args.Titles)

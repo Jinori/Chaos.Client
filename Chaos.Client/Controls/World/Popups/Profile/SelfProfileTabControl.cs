@@ -161,7 +161,7 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
             equipTab.OnGroupToggled += () => OnGroupToggled?.Invoke();
             equipTab.OnProfileTextClicked += () => OnProfileTextClicked?.Invoke();
             equipTab.OnToggleHidden += (option, hidden) => OnToggleHidden?.Invoke(option, hidden);
-            equipTab.OnTitleSelected += title => OnTitleSelected?.Invoke(title);
+            equipTab.OnTitleSelected += idx => OnTitleSelected?.Invoke(idx);
             equipTab.OnTitleListRequested += () => OnTitleListRequested?.Invoke();
         }
 
@@ -213,7 +213,7 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
     public event Action<UserOption, bool>? OnToggleHidden;
 
     public event UnequipHandler? OnUnequip;
-    public event Action<string>? OnTitleSelected;
+    public event Action<int>? OnTitleSelected;
     public event Action? OnTitleListRequested;
 
     /// <summary>
@@ -442,13 +442,13 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
     }
 
     /// <summary>
-    ///     Populates the Equipment tab's title dropdown with the player's titles and active title.
+    ///     Populates the Equipment tab's title combo with the player's titles and selects the active index.
     /// </summary>
-    public void SetTitles(string activeTitle, IEnumerable<string> titles)
+    public void SetTitles(int activeIndex, IEnumerable<string> titles)
     {
         var equipPage = GetOrCreateEquipmentPage();
 
-        equipPage?.SetTitles(activeTitle, titles);
+        equipPage?.SetTitles(activeIndex, titles);
     }
 
     /// <summary>
