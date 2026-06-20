@@ -162,7 +162,6 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
             equipTab.OnProfileTextClicked += () => OnProfileTextClicked?.Invoke();
             equipTab.OnToggleHidden += (option, hidden) => OnToggleHidden?.Invoke(option, hidden);
             equipTab.OnTitleSelected += idx => OnTitleSelected?.Invoke(idx);
-            equipTab.OnTitleListRequested += () => OnTitleListRequested?.Invoke();
         }
 
         if (page is SelfProfileAbilityMetadataTab skillsTab)
@@ -214,7 +213,6 @@ public sealed class SelfProfileTabControl : PrefabPanel, IInventoryDropTarget
 
     public event UnequipHandler? OnUnequip;
     public event Action<int>? OnTitleSelected;
-    public event Action? OnTitleListRequested;
 
     /// <summary>
     ///     Pushes the server's hidden-equipment flags (echoed in SelfProfile) onto the Equipment tab's visibility dots.

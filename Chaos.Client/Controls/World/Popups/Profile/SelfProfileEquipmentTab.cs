@@ -379,7 +379,6 @@ public sealed class SelfProfileEquipmentTab : PrefabPanel
 
     public event UnequipHandler? OnUnequip;
     public event Action<int>? OnTitleSelected;
-    public event Action? OnTitleListRequested;
 
     /// <summary>
     ///     Applies the server's hidden-equipment flags (echoed in SelfProfile) to the dots so each reflects the authoritative

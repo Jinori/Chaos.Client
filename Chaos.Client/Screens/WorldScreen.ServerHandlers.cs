@@ -737,9 +737,8 @@ public sealed partial class WorldScreen
             args.GuildRank ?? string.Empty,
             args.Title ?? string.Empty);
 
-        //request the player's full title list so the title dropdown can populate
-        //(bootstraps HasTitles → the ▼ affordance and click-to-open both depend on it)
-        Game.Connection.SendTitleListRequest();
+        //the title list + active index now ride along on the self-profile packet itself
+        StatusBook.SetTitles(args.ActiveTitleIndex, args.Titles);
 
         //equipment visibility dots — echo the server's authoritative hidden-slot flags onto the dots
         StatusBook.ApplyHiddenEquipmentFlags(args.HiddenEquipmentFlags);
@@ -867,8 +866,6 @@ public sealed partial class WorldScreen
         StatusBook.SwitchTab(tab);
         StatusBook.Show();
     }
-
-    private void HandleTitleList(Chaos.Client.Networking.Titles.TitleListArgs args) => StatusBook.SetTitles(args.ActiveIndex, args.Titles);
 
     private void HandleOtherProfile(OtherProfileArgs args)
     {
