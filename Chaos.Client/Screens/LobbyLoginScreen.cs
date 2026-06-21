@@ -23,6 +23,7 @@ namespace Chaos.Client.Screens;
 public sealed class LobbyLoginScreen : IScreen
 {
     private readonly bool ReturningFromWorld;
+    private bool _autoLoginAttempted;
     private bool AwaitingCharFinalize;
 
     private uint? CachedNoticeCheckSum;
@@ -354,6 +355,40 @@ public sealed class LobbyLoginScreen : IScreen
             MachineIdentity.ClientId2);
     }
 
+    /// <summary>If launched from a Quick Launch card, fill the login fields and (when a password
+    /// was provided) submit, reusing the normal OnLoginOkClicked → LoginArgs packet path. Runs at
+    /// most once, only when the login screen is ready to accept input. The EULA is never auto-accepted.</summary>
+    private void TryAutoLogin()
+    {
+        if (_autoLoginAttempted)
+            return;
+
+        var decision = AutoLoginDecision.Decide(GlobalSettings.AutoUsername, GlobalSettings.AutoPassword);
+
+        if (!decision.ShouldFill)
+            return;
+
+        // Not ready to act yet (still connecting / another panel open) — leave _autoLoginAttempted
+        // unset so a later EnableButtons() retries.
+        if (Connecting || LoginControl.Visible || PasswordChangeControl.Visible)
+            return;
+
+        _autoLoginAttempted = true;
+
+        LoginControl.Show();
+        StartPanel.SetButtonsEnabled(false);
+
+        if (LoginControl.UsernameField is not null)
+            LoginControl.UsernameField.Text = decision.Username;
+
+        if (decision.ShouldSubmit && LoginControl.PasswordField is not null)
+        {
+            LoginControl.PasswordField.Text = decision.Password!;
+            OnLoginOkClicked();
+        } else if (LoginControl.PasswordField is not null)
+            LoginControl.PasswordField.IsFocused = true;
+    }
+
     private void OnLoginCancelClicked()
     {
         LoginControl.Hide();
@@ -545,6 +580,7 @@ public sealed class LobbyLoginScreen : IScreen
         if (ReturningFromWorld)
         {
             StartPanel.EnableButtons();
+            TryAutoLogin();
 
             return;
         }
@@ -556,6 +592,7 @@ public sealed class LobbyLoginScreen : IScreen
             {
                 //already accepted this notice, skip display and enable buttons
                 StartPanel.EnableButtons();
+                TryAutoLogin();
 
                 return;
             }
@@ -578,6 +615,7 @@ public sealed class LobbyLoginScreen : IScreen
     {
         LoginNoticeControl.Hide();
         StartPanel.EnableButtons();
+        TryAutoLogin();
     }
 
     private void OnLoginCancelled() => Game.Exit();
