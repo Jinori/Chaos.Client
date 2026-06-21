@@ -609,6 +609,12 @@ public sealed class LobbyLoginScreen : IScreen
         var noticeText = DecompressNotice(args.Data);
 
         LoginNoticeControl.Show(noticeText);
+
+        // Card auto-login: accept the notice on the user's behalf so a card launch is fully
+        // hands-off (no manual OK click). Only fires when launched from a Quick Launch card
+        // (DA_AUTO_USERNAME set); a normal manual login still shows the notice and waits for OK.
+        if (Chaos.Client.Systems.AutoLoginDecision.Decide(GlobalSettings.AutoUsername, GlobalSettings.AutoPassword).ShouldFill)
+            OnLoginAccepted();
     }
 
     private void OnLoginAccepted()
