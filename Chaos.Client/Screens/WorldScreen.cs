@@ -54,6 +54,9 @@ public sealed partial class WorldScreen : IScreen
     //used by DrawAisling to route transparent players through the silhouette pass instead of the stripe pass.
     private bool DrawingForSilhouette;
 
+    //set true after the first successful avatar capture on world-enter so we don't re-capture every frame
+    private bool _avatarCaptured;
+
     //entity hitbox dimensions (screen pixels)
     private const int HITBOX_WIDTH = 28;
     private const int HITBOX_HEIGHT = 60;
@@ -794,6 +797,12 @@ public sealed partial class WorldScreen : IScreen
     /// <inheritdoc />
     public void UnloadContent()
     {
+        if (Chaos.Client.Systems.AvatarCapture.IsEnabled
+            && WorldState.GetPlayerEntity()?.Appearance is { } finalAppearance)
+        {
+            Chaos.Client.Systems.AvatarCapture.CaptureAndSave(Game.AislingRenderer, in finalAppearance);
+        }
+
         Game.Connection.OnUserId -= HandleUserId;
         Game.Connection.OnMapInfo -= HandleMapInfo;
         Game.Connection.OnMapData -= HandleMapData;

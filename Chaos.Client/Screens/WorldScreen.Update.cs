@@ -22,6 +22,14 @@ public sealed partial class WorldScreen
             return;
         }
 
+        if (!_avatarCaptured
+            && Chaos.Client.Systems.AvatarCapture.IsEnabled
+            && WorldState.GetPlayerEntity()?.Appearance is { } selfAppearance)
+        {
+            _avatarCaptured = true;
+            Chaos.Client.Systems.AvatarCapture.CaptureAndSave(Game.AislingRenderer, in selfAppearance);
+        }
+
         var elapsedMs = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 
         //global tile animation tick — 100ms resolution (matches tile animation table format)
