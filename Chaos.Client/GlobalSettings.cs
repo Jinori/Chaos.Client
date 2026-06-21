@@ -37,6 +37,18 @@ public static class GlobalSettings
             4200;
             //2610;
 
+    /// <summary>Card auto-login: the username the launcher wants pre-filled/submitted (DA_AUTO_USERNAME).
+    /// Null/empty when not launched from a Quick Launch card.</summary>
+    public static string? AutoUsername => Environment.GetEnvironmentVariable("DA_AUTO_USERNAME");
+
+    /// <summary>Card auto-login: the password to submit (DA_AUTO_PASSWORD). When present (with
+    /// AutoUsername), the login screen submits automatically; when absent, only the name is pre-filled.</summary>
+    public static string? AutoPassword => Environment.GetEnvironmentVariable("DA_AUTO_PASSWORD");
+
+    /// <summary>Directory the launcher wants the captured character avatar written to (DA_CARD_AVATAR_DIR).
+    /// Null/empty disables avatar capture.</summary>
+    public static string? CardAvatarDir => Environment.GetEnvironmentVariable("DA_CARD_AVATAR_DIR");
+
     /// <summary>
     ///     When true, walking onto a water tile requires either the GM flag or the "Swimming" skill.
     ///     When false (default), any character can swim freely and pathfinding routes through water tiles.
