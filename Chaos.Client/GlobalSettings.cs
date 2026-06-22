@@ -18,7 +18,7 @@ public static class GlobalSettings
     private static readonly string[] PreLoadedAssemblies = ["Chaos.Networking"];
     private static readonly Type[] PreInitializedStatics = [typeof(DataContext), typeof(MachineIdentity)];
     public static readonly SamplerState Sampler = SamplerState.PointClamp; //SamplerState.LinearClamp;
-    private static ushort ClientVersion => 743;
+    private static ushort ClientVersion => 744;
 
     public static string DataPath
         => Environment.GetEnvironmentVariable("DA_PATH") ??
