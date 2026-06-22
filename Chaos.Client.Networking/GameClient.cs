@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using Chaos.Cryptography;
 using Chaos.Extensions.Common;
+using Chaos.Extensions.Networking;
 using Chaos.Networking.Abstractions.Definitions;
 using Chaos.Networking.Entities.Client;
 using Chaos.Networking.Entities.Server;
@@ -134,13 +135,14 @@ public sealed class GameClient : IDisposable
     /// <param name="serverPacket">The server packet to deserialize.</param>
     public T Deserialize<T>(in ServerPacket serverPacket) where T: IPacketSerializable
     {
-        var span = serverPacket.Data.AsSpan(0, serverPacket.Length);
-        var isEncrypted = serverPacket.IsEncrypted;
-        var packet = new Packet(ref span, isEncrypted);
+        //serverPacket.Data already holds the decrypted (and, if applicable, decompressed) payload,
+        //so hand it straight to the serializer as the packet buffer — no header to parse.
+        var packet = new Packet(serverPacket.OpCode)
+        {
+            Buffer = serverPacket.Data.AsSpan(0, serverPacket.Length),
+            Sequence = serverPacket.Sequence
+        };
 
-        //the buffer in serverpacket.data has already been decrypted,
-        //so we reconstruct a packet for the serializer to read
-        //(the packet constructor expects the full wire bytes including header)
         return PacketSerializer.Deserialize<T>(in packet);
     }
 
@@ -256,6 +258,10 @@ public sealed class GameClient : IDisposable
     {
         if (!Connected)
             return;
+
+        //compression is the wire layer below encryption: compress the plaintext payload first, then encrypt it.
+        if (Crypto.IsClientCompressed(packet.OpCode))
+            Crypto.Compress(ref packet);
 
         packet.IsEncrypted = Crypto.IsClientEncrypted(packet.OpCode);
         SocketAsyncEventArgs args;
@@ -403,30 +409,42 @@ public sealed class GameClient : IDisposable
         if (isEncrypted)
             Crypto.ClientDecrypt(ref packet.Buffer, packet.OpCode, packet.Sequence);
 
-        //dispatch to registered handler (e.g. heartbeat, synchronizeticks auto-responders)
-        var handler = ServerHandlers[opCode];
+        //compression is the wire layer below encryption: decompress the plaintext payload after decrypting it.
+        //Decompress rents a pooled buffer onto the packet, disposed below once the payload has been consumed.
+        if (Crypto.IsServerCompressed(opCode))
+            Crypto.Decompress(ref packet);
 
-        if (handler is not null)
+        try
         {
-            handler(in packet);
+            //dispatch to registered handler (e.g. heartbeat, synchronizeticks auto-responders)
+            var handler = ServerHandlers[opCode];
 
-            return;
+            if (handler is not null)
+            {
+                handler(in packet);
+
+                return;
+            }
+
+            //default: enqueue the decrypted+decompressed payload for game loop consumption.
+            //the rented buffer is returned to the pool by ConnectionManager after deserialization.
+            var payloadLength = packet.Buffer.Length;
+            var rented = ArrayPool<byte>.Shared.Rent(payloadLength);
+            packet.Buffer.CopyTo(rented);
+
+            var serverPacket = new ServerPacket(
+                opCode,
+                packet.Sequence,
+                rented,
+                payloadLength);
+
+            InboundQueue.Enqueue(serverPacket);
+            OnPacketReceived?.Invoke(serverPacket);
+        } finally
+        {
+            //releases the pooled buffer if the packet was decompressed; no-op otherwise
+            packet.Dispose();
         }
-
-        //default: enqueue for game loop consumption (rented buffer returned after deserialization)
-        var wireLength = rawPacket.Length;
-        var rented = ArrayPool<byte>.Shared.Rent(wireLength);
-        rawPacket.CopyTo(rented);
-
-        var serverPacket = new ServerPacket(
-            opCode,
-            packet.Sequence,
-            isEncrypted,
-            rented,
-            wireLength);
-
-        InboundQueue.Enqueue(serverPacket);
-        OnPacketReceived?.Invoke(serverPacket);
     }
 
     private void HandleHeartBeat(in Packet packet)
@@ -506,11 +524,11 @@ public sealed class GameClient : IDisposable
 }
 
 /// <summary>
-///     Represents a received server packet with its raw wire bytes for deferred deserialization.
+///     Represents a received server packet whose <see cref="Data" /> holds the decrypted (and, if the opcode was
+///     compressed, decompressed) payload, rented from <see cref="ArrayPool{T}" /> for deferred deserialization.
 /// </summary>
 public readonly record struct ServerPacket(
     byte OpCode,
     byte Sequence,
-    bool IsEncrypted,
     byte[] Data,
     int Length);
