@@ -72,6 +72,8 @@ public sealed class LobbyLoginScreen : IScreen
     {
         Game = game;
 
+        Game.Window.Title = "Unora";
+
         Game.Connection.StateChanged += OnConnectionStateChanged;
         Game.Connection.OnError += OnConnectionError;
         Game.Connection.OnServerTableReceived += OnServerTableReceived;

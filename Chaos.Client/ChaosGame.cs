@@ -155,7 +155,7 @@ public sealed class ChaosGame : Game
         };
         Connection.OnCreatureTurn += (id, dir) => WorldState.HandleCreatureTurn(id, dir);
 
-        Window.Title = "Darkages";
+        Window.Title = "Unora";
         Window.AllowUserResizing = true;
         IsMouseVisible = true;
     }

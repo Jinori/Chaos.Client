@@ -34,6 +34,7 @@ public sealed partial class WorldScreen
         if (args.Id == Game.Connection.AislingId)
         {
             WorldState.PlayerName = args.Name;
+            Game.Window.Title = args.Name;
             UpdateHuds(HudOps.SetPlayerName, args.Name);
             UpdateHuds(HudOps.SetServerName, Game.Connection.ServerName);
             DataContext.LocalPlayerSettings.Initialize(args.Name);
