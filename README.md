@@ -10,8 +10,55 @@ Targets Dark Ages client version **7.4.1** for feature parity.
 
 Runs on **Windows, macOS, and Linux** — anywhere the .NET 10 SDK and MonoGame's DesktopGL backend are supported.
 
+## Configuration
+
+Almost everything a fork needs to change is in `Chaos.Client/GlobalSettings.cs`:
+
+| Setting                | What it is                                                                                                                          |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `ClientVersion`        | Version sent to the server on handshake. Default `744`.                                                                             |
+| `DataPath`             | Absolute path to the Dark Ages data folder (contains the `.dat` archives).                                                          |
+| `LobbyHost`            | Lobby server hostname or IP.                                                                                                        |
+| `LobbyPort`            | Lobby server port.                                                                                                                  |
+| `RequireSwimmingSkill` | When `true`, restores retail swim gate — water tiles require the GM flag or the `Swimming` skill. Default `false` (no requirement). |
+
+## Build & Run
+
+Requires the **.NET 10 SDK**. Builds and runs on Windows, macOS, and Linux.
+
+```bash
+# Fetch the Chaos-Server submodule (shared protocol projects).
+# Cloning the client with --recursive does this automatically.
+git submodule update --init --recursive
+
+dotnet build Chaos.Client.slnx
+dotnet run --project Chaos.Client/Chaos.Client.csproj
+```
+
+> [!NOTE]
+> The client also needs a Dark Ages data folder to load its archives from. Point `GlobalSettings.DataPath` at
+> yours before the first run, or the game will fail to start.
+
+### Linux
+
+No package-manager step is needed for audio or rendering — the `linux-x64` natives are bundled and self-contained:
+
+- `libSDL2_mixer.so` is built with its codecs compiled in (minimp3 for MP3, etc.), so it needs **no**
+  `libmpg123` / `libFLAC` / `libvorbis` system packages. Its only dynamic dependencies are `libc` and base
+  `libSDL2` (the latter shipped by MonoGame).
+- `libSkiaSharp.so` ships via the `SkiaSharp.NativeAssets.Linux` package, referenced from `Chaos.Client.Data`.
+
+Two Linux-specific notes:
+
+- You need a desktop Linux with working OpenGL drivers (Mesa or vendor) for MonoGame's DesktopGL backend.
+- Linux filesystems are case-sensitive: point `DataPath` at a data folder whose archive files (and the `npc/`,
+  `maps/`, … subfolders) are lowercase. The client lowercases `.dat` archive names to match.
+
 ## Contents
 
+- [Configuration](#configuration)
+- [Build & Run](#build--run)
+    - [Linux](#linux)
 - [Status](#status)
 - [Differences from the Retail Client](#differences-from-the-retail-client)
 - [Architecture](#architecture)
@@ -36,8 +83,6 @@ Runs on **Windows, macOS, and Linux** — anywhere the .NET 10 SDK and MonoGame'
     - [TextRenderer + FontAtlas](#textrenderer--fontatlas)
     - [UiRenderer](#uirenderer)
     - [Per-entity renderers](#per-entity-renderers-creaturerenderer-aislingrenderer-effectrenderer-itemrenderer)
-- [Build & Run](#build--run)
-- [Configuration](#configuration)
 - [Extending](#extending)
     - [Adding a UI panel](#adding-a-ui-panel)
     - [Adding a packet handler](#adding-a-packet-handler)
@@ -102,7 +147,7 @@ This is not an exhaustive list, but other differences are likely too minor to bo
 | **DALib**                   | Dark Ages file formats and SkiaSharp rendering.                                                                                                                                                                                                        |
 | **Chaos.Client.Data**       | Opens the `.dat` archives via memory-mapped files and exposes repositories for sprites, tiles, fonts, metafiles, UI prefabs, etc. Some repositories cache their entries with eviction policies appropriate to the asset type; others are pass-through. |
 | **Chaos.Client.Rendering**  | Converts DALib's SkiaSharp output into MonoGame `Texture2D` and owns the map, camera, darkness, tab map, and per-entity renderers.                                                                                                                     |
-| **Chaos.Client.Networking** | TCP, crypto, packet framing, and a state-machine `ConnectionManager` on top of the `Chaos.Networking` NuGet package. Packet handlers are registered into an opcode-indexed delegate array.                                                             |
+| **Chaos.Client.Networking** | TCP, crypto, packet framing, and a state-machine `ConnectionManager` on top of the `Chaos.Networking` project (referenced from the Chaos-Server submodule). Packet handlers are registered into an opcode-indexed delegate array.                      |
 | **Chaos.Client**            | MonoGame `Game`, screens, UI controls, game systems, and world state.                                                                                                                                                                                  |
 
 Dependency flow:
@@ -522,58 +567,6 @@ change, leak GPU memory if you forget to call `Clear`.
 - **`ItemRenderer`** — ground items. Deliberately separate from `UiRenderer`'s permanent icon cache because ground-item
   textures are evicted on map change while UI icons are not. Cache key includes dye color, and per-frame `(Left, Top)`
   offsets are stored so items center visually on their tile.
-
-## Build & Run
-
-Requires the **.NET 10 SDK**. Builds and runs on Windows, macOS, and Linux.
-
-> [!IMPORTANT]
-> The solution has a `ProjectReference` to [DALib](https://github.com/Sichii/DALib) at `../dalib/DALib/DALib.csproj`.
-> DALib must be checked out into a sibling `dalib/` directory before the build will resolve. From inside this repo:
->
-> ```bash
-> git clone https://github.com/Sichii/DALib ../dalib
-> ```
-
-Then:
-
-```bash
-# Fetch the Chaos-Server submodule (shared protocol projects) — needs access to the private fork.
-# Cloning the client with --recursive does this automatically.
-git submodule update --init --recursive
-
-dotnet build Chaos.Client.slnx
-dotnet run --project Chaos.Client/Chaos.Client.csproj
-```
-
-> [!NOTE]
-> The client also needs a retail Dark Ages data folder to load its archives from. Point `GlobalSettings.DataPath` at
-> yours before the first run, or the game will fail to start.
-
-> [!NOTE]
-> **Linux users:** install SDL2_mixer's runtime deps via your package manager — the bundled `libSDL2_mixer.so` relies on
-> system-provided codec libraries (`libmpg123`, `libvorbisfile`, `libFLAC`, `libfluidsynth`, etc.) that come free with
-> the distro package:
->
-> ```bash
-> sudo apt install libsdl2-mixer-2.0-0       # Debian/Ubuntu
-> sudo dnf install SDL2_mixer                # Fedora/RHEL
-> sudo pacman -S sdl2_mixer                  # Arch
-> ```
->
-> Windows and macOS ship fully self-contained binaries — no extra install step.
-
-## Configuration
-
-Almost everything a fork needs to change is in `Chaos.Client/GlobalSettings.cs`:
-
-| Setting                | What it is                                                                                                                          |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `ClientVersion`        | Version sent to the server on handshake. Default `742`.                                                                             |
-| `DataPath`             | Absolute path to the Dark Ages data folder (contains the `.dat` archives).                                                          |
-| `LobbyHost`            | Lobby server hostname or IP.                                                                                                        |
-| `LobbyPort`            | Lobby server port.                                                                                                                  |
-| `RequireSwimmingSkill` | When `true`, restores retail swim gate — water tiles require the GM flag or the `Swimming` skill. Default `false` (no requirement). |
 
 ## Extending
 

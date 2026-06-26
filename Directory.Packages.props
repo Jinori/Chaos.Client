@@ -1,9 +1,11 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="DALib" Version="0.7.0" />
-    <!-- SkiaSharp Linux native (libSkiaSharp.so). DALib pulls SkiaSharp 3.116.0; Win/macOS natives
-         tag along on a Windows/macOS restore, but the Linux native must be referenced explicitly or
-         a Linux publish ships no libSkiaSharp.so. Keep this version in sync with DALib's SkiaSharp. -->
+    <!-- SkiaSharp managed + Linux native (libSkiaSharp.so), pinned to one version. DALib pulls SkiaSharp
+         transitively, but the Linux native must be referenced explicitly or a Linux publish ships none.
+         The managed pin (via a direct PackageReference in Chaos.Client.Data) makes a future DALib-driven
+         SkiaSharp bump fail the restore rather than silently ship a mismatched managed/native pair. -->
+    <PackageVersion Include="SkiaSharp" Version="3.116.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.116.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.5" />
     <PackageVersion Include="TextCopy" Version="6.2.1" />
