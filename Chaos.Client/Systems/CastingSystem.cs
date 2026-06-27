@@ -1,6 +1,7 @@
 #region
 using Chaos.Client.Controls.World.Hud.Panel.Slots;
 using Chaos.Client.Networking;
+using Chaos.DarkAges.Definitions;
 #endregion
 
 namespace Chaos.Client.Systems;
@@ -39,6 +40,12 @@ public sealed class CastingSystem
     ///     True when waiting for the player to select a target entity.
     /// </summary>
     public bool IsTargeting => TargetingSlot is not null;
+
+    /// <summary>
+    ///     True when the spell awaiting target selection is ground-targeted — the player picks a tile (point) rather than
+    ///     an entity. Drives the tile highlight and routes the click to a point instead of an entity.
+    /// </summary>
+    public bool IsGroundTargeting => TargetingSlot?.SpellType == SpellType.GroundTargeted;
 
     /// <summary>
     ///     True when any casting activity is in progress (targeting or chanting).

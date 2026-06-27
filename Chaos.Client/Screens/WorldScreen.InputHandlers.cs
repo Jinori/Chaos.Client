@@ -1136,16 +1136,36 @@ public sealed partial class WorldScreen
         //cast mode — target selection or cancel
         if (CastingSystem.IsTargeting)
         {
-            var hoverEntity = GetEntityAtScreen(e.ScreenX, e.ScreenY);
+            if (CastingSystem.IsGroundTargeting)
+            {
+                //ground-targeted spells land on the clicked tile, not an entity (id 0). clamp off-map clicks to the
+                //nearest edge tile, mirroring right-click pathfinding.
+                if (MapFile is not null)
+                {
+                    (var tileX, var tileY) = ScreenToTile(e.ScreenX, e.ScreenY);
+                    tileX = Math.Clamp(tileX, 0, MapFile.Width - 1);
+                    tileY = Math.Clamp(tileY, 0, MapFile.Height - 1);
 
-            if (hoverEntity?.Type is ClientEntityType.Aisling or ClientEntityType.Creature)
-                CastingSystem.SelectTarget(
-                    hoverEntity.Id,
-                    hoverEntity.TileX,
-                    hoverEntity.TileY,
-                    Game.Connection);
-            else
-                CastingSystem.CancelTargeting();
+                    CastingSystem.SelectTarget(
+                        0,
+                        tileX,
+                        tileY,
+                        Game.Connection);
+                } else
+                    CastingSystem.CancelTargeting();
+            } else
+            {
+                var hoverEntity = GetEntityAtScreen(e.ScreenX, e.ScreenY);
+
+                if (hoverEntity?.Type is ClientEntityType.Aisling or ClientEntityType.Creature)
+                    CastingSystem.SelectTarget(
+                        hoverEntity.Id,
+                        hoverEntity.TileX,
+                        hoverEntity.TileY,
+                        Game.Connection);
+                else
+                    CastingSystem.CancelTargeting();
+            }
 
             e.Handled = true;
 

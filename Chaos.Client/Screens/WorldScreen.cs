@@ -219,6 +219,12 @@ public sealed partial class WorldScreen : IScreen
 
     //tile cursor: dashed ellipse drawn on the hovered tile
     private Texture2D? TileCursorTexture;
+
+    //ground-target spell highlight: a faint-fill + brighter-border tile diamond drawn on the hovered tile in place of
+    //the cursor (tab-map style). the texture bakes the fill/border opacity ratio in white; this premultiplied tint sets
+    //the overall color + opacity — tune here. (premultiplied: * 0.5f == 50% border opacity; interior fill is 25% of that.)
+    private Texture2D? TileHighlightTexture;
+    private static readonly Color GroundTargetHighlightColor = new Color(0, 255, 255) * 0.5f;
     private IWorldHud WorldHud = null!;
     private WorldListControl WorldList = null!;
     private TownMapControl TownMapControl = null!;
@@ -284,6 +290,8 @@ public sealed partial class WorldScreen : IScreen
 
         TileCursorTexture = CreateTileCursorTexture(graphicsDevice, new Color(247, 142, 24));
         TileCursorDragTexture = CreateTileCursorTexture(graphicsDevice, new Color(100, 149, 237));
+
+        TileHighlightTexture = CreateTileHighlightTexture(graphicsDevice);
 
         //overlay panels — zindex: -2 sub-panels, -1 slide panels, 0 standard (default), 1 popups, 2 context menu
         NpcSession = new NpcSessionControl();

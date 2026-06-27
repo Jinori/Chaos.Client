@@ -316,7 +316,9 @@ public sealed partial class WorldScreen
         //GetSortedEntities is self-caching via dirty flag, so this call is free when the sort is still valid.
         WorldState.CurrentFrame.SortedEntities = WorldState.GetSortedEntities();
         WorldState.CurrentFrame.HoveredEntityId = newHoveredId;
-        WorldState.CurrentFrame.ShowTintHighlight = CastingSystem.IsTargeting || Game.Dispatcher.IsDragging;
+        //ground-targeting tints the tile (see WorldScreen.Draw), not entities — so suppress the entity hover-tint for it
+        WorldState.CurrentFrame.ShowTintHighlight =
+            (CastingSystem.IsTargeting && !CastingSystem.IsGroundTargeting) || Game.Dispatcher.IsDragging;
         WorldState.CurrentFrame.UseDragCursor = Game.Dispatcher.IsDragging;
 
         var worldViewport = WorldHud.ViewportBounds;

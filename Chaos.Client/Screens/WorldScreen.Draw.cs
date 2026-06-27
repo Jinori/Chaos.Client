@@ -108,6 +108,16 @@ public sealed partial class WorldScreen
                 BlendScope.End();
             }
 
+            //ground-target outline — drawn after foreground/entities so a wall/tree on the target tile can't occlude
+            //the targeting indicator. camera-space (same transform as the world passes). guarded to skip the batch
+            //setup when not targeting.
+            if (CastingSystem.IsGroundTargeting)
+            {
+                spriteBatch.Begin(samplerState: GlobalSettings.Sampler, rasterizerState: ScissorRasterizerState, transformMatrix: transform);
+                DrawGroundTargetHighlight(spriteBatch);
+                spriteBatch.End();
+            }
+
             //darkness overlay — drawn over the world in screen space (no camera transform)
             if (DarknessRenderer.IsActive)
             {
@@ -956,6 +966,10 @@ public sealed partial class WorldScreen
         if (MapFile is null || TileCursorTexture is null)
             return;
 
+        //ground-targeting replaces the dashed cursor with the target-tile treatment (see DrawGroundTargetHighlight)
+        if (CastingSystem.IsGroundTargeting)
+            return;
+
         if (WorldState.CurrentFrame.HoveredTile is not { } hoverTile)
             return;
 
@@ -964,6 +978,85 @@ public sealed partial class WorldScreen
 
         var cursorTexture = WorldState.CurrentFrame.UseDragCursor ? TileCursorDragTexture : TileCursorTexture;
         spriteBatch.Draw(cursorTexture!, new Vector2((int)tileScreen.X, (int)tileScreen.Y), Color.White);
+    }
+
+    /// <summary>
+    ///     GROUND-TARGET TILE TREATMENT — SWAP SEAM. The single place that decides how a ground-targeted spell's target
+    ///     tile is conveyed. Drawn over the world (after foreground/entities, so walls can't occlude it), replacing the
+    ///     dashed cursor while a ground spell is armed. To try a different treatment (glow, pulse, sprite, etc.), rewrite
+    ///     this method body — nothing else in the targeting flow changes.
+    ///     Current: a cyan tile diamond — brighter perimeter border over a very slight interior fill (fill/border ratio
+    ///     baked into the texture; <see cref="GroundTargetHighlightColor" /> is the premultiplied tint for overall
+    ///     color/opacity). ponytail: single hovered tile now. For the multi-tile AOE stencil, reuse TabMapRenderer's
+    ///     border-collapse — a 16-variant atlas keyed by a 4-bit neighbor mask so a region shows only its outer perimeter;
+    ///     this single tile is that scheme's mask=0 (all-borders) case.
+    /// </summary>
+    private void DrawGroundTargetHighlight(SpriteBatch spriteBatch)
+    {
+        if (MapFile is null || TileHighlightTexture is null)
+            return;
+
+        if (!CastingSystem.IsGroundTargeting)
+            return;
+
+        if (WorldState.CurrentFrame.HoveredTile is not { } tile)
+            return;
+
+        var tileWorld = Camera.TileToWorld(tile.X, tile.Y, MapFile.Height);
+        var tileScreen = Camera.WorldToScreen(new Vector2(tileWorld.X, tileWorld.Y));
+
+        spriteBatch.Draw(TileHighlightTexture, new Vector2((int)tileScreen.X, (int)tileScreen.Y), GroundTargetHighlightColor);
+    }
+
+    /// <summary>
+    ///     Creates the tile-diamond highlight texture: a faint interior fill with a brighter perimeter border, mirroring
+    ///     TabMapRenderer's fill+border tile so the world highlight and tab map read consistently. Pixels are white with
+    ///     the fill/border opacity ratio baked in; the caller applies color and overall opacity via the draw tint.
+    /// </summary>
+    private static Texture2D CreateTileHighlightTexture(GraphicsDevice device)
+    {
+        const int WIDTH = DaLibConstants.TILE_WIDTH; //56
+        const int HEIGHT = DaLibConstants.TILE_HEIGHT; //27
+
+        var fill = Color.White * 0.25f; //interior weight relative to the opaque border (further scaled by the draw tint)
+
+        var pixels = new Color[WIDTH * HEIGHT];
+
+        var cx = WIDTH / 2; //28
+        var cy = HEIGHT / 2; //13
+        var hw = WIDTH / 2 - 1; //27 — left/right tips land at x=1/x=55, inside the buffer (no tip clipping)
+        var hh = HEIGHT / 2; //13
+
+        //interior fill: solid span per row (every pixel set, no gaps). half-width is 0 at the tips, full hw at center.
+        for (var y = 0; y < HEIGHT; y++)
+        {
+            var halfW = (int)MathF.Round(hw * (1f - Math.Abs(y - cy) / (float)hh));
+
+            for (var x = cx - halfW; x <= cx + halfW; x++)
+                pixels[y * WIDTH + x] = fill;
+        }
+
+        //perimeter border: the diamond edge is shallow (~2px across per 1px down), so it must be walked x-major (one
+        //pixel per COLUMN) to stay connected — drawing it per-row would leave ~2px gaps and read as a dotted line.
+        //DrawProjectedQuadrants mirrors this one quarter onto all four edges, overwriting the fill's edge pixels.
+        Span<Point> quarter = stackalloc Point[hw + 1];
+
+        for (var dx = 0; dx <= hw; dx++)
+            quarter[dx] = new Point(dx, -hh + (int)MathF.Round(dx * (float)hh / hw));
+
+        ImageUtil.DrawProjectedQuadrants(
+            pixels,
+            WIDTH,
+            HEIGHT,
+            cx,
+            cy,
+            quarter,
+            Color.White);
+
+        var texture = new Texture2D(device, WIDTH, HEIGHT);
+        texture.SetData(pixels);
+
+        return texture;
     }
     #endregion
 }
