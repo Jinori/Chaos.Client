@@ -62,7 +62,8 @@ public enum SettingKey
     HealNumbersOnAislings,
     DamageNumbersOnNpcs,
     HealNumbersOnNpcs,
-    DamageNumberSize
+    DamageNumberSize,
+    DamageNumbersMyOutputOnly
 }
 
 /// <summary>
@@ -152,6 +153,14 @@ public static class SettingDefinitions
                 ClientSettings.DamageNumberSize = (DamageNumberSize)i;
                 ClientSettings.Save();
             },
+            GatedBy: SettingKey.DamageNumbersEnabled),
+        new(
+            SettingKey.DamageNumbersMyOutputOnly,
+            "Only show my own output",
+            SettingSection.DamageNumbers,
+            SettingCategory.ServerOption,
+            UserOption.DamageNumbersMyOutputOnly,
+            Span: SettingSpan.Full,
             GatedBy: SettingKey.DamageNumbersEnabled),
         new(
             SettingKey.DamageNumbersOnAislings,

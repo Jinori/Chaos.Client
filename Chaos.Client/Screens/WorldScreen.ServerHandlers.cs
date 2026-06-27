@@ -334,6 +334,7 @@ public sealed partial class WorldScreen
         userOptions.Apply(SettingKey.AllowExchanges, args.AllowExchange);
         userOptions.Apply(SettingKey.HideEnemyHealthBars, args.HideEnemyHealthBars);
         userOptions.Apply(SettingKey.ShowFriendlyNametags, args.AlwaysShowFriendlyNametags);
+        userOptions.Apply(SettingKey.DamageNumbersMyOutputOnly, args.DamageNumbersMyOutputOnly);
     }
 
     //--- npc dialog / menu ---
