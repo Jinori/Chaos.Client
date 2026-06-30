@@ -67,7 +67,7 @@ public sealed class ItemAmountControl : PrefabPanel
         };
         AddChild(CancelButton);
 
-        AmountTextBox = CreateTextBox("Text", 3);
+        AmountTextBox = CreateTextBox("Text", 5);
 
         var titleLabel = CreateLabel("Title");
         titleLabel?.ForegroundColor = Color.White;

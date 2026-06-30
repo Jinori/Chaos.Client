@@ -474,7 +474,7 @@ public sealed partial class WorldScreen : IScreen
                         ExchangeRequestType.AddStackableItem,
                         Exchange.OtherUserId,
                         ItemAmount.ItemSlot,
-                        (byte)Math.Min(amount, byte.MaxValue));
+                        (ushort)Math.Min(amount, ushort.MaxValue));
 
                     break;
 

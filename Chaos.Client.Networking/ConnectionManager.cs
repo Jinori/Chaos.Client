@@ -1003,7 +1003,7 @@ public sealed class ConnectionManager : IDisposable
         ExchangeRequestType type,
         uint otherId = 0,
         byte? sourceSlot = null,
-        byte? itemCount = null,
+        ushort? itemCount = null,
         int? goldAmount = null)
         => SendIfWorld(
             new ExchangeInteractionArgs
