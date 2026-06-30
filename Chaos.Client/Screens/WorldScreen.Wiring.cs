@@ -1042,6 +1042,9 @@ public sealed partial class WorldScreen
             h.EmoteButton.NormalTexture = icon;
             h.EmoteButton.SelectedTexture = icon;
         };
+
+        public static readonly Action<IWorldHud, byte, EffectColor> SetEffect =
+            static (h, icon, color) => h.EffectBar.SetEffect(icon, color);
     }
     #endregion
 
