@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Chaos.Client.Data;
 using Chaos.Client.Systems;
+using Chaos.DarkAges.Definitions;
 using Microsoft.Xna.Framework.Graphics;
 #endregion
 
@@ -18,7 +19,7 @@ public static class GlobalSettings
     private static readonly string[] PreLoadedAssemblies = ["Chaos.Networking"];
     private static readonly Type[] PreInitializedStatics = [typeof(DataContext), typeof(MachineIdentity)];
     public static readonly SamplerState Sampler = SamplerState.PointClamp; //SamplerState.LinearClamp;
-    private static ushort ClientVersion => 744;
+    private static ushort ClientVersion => CONSTANTS.CLIENT_VERSION;
 
     public static string DataPath
         => Environment.GetEnvironmentVariable("DA_PATH") ??
